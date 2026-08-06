@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { API_BASE_URL } from '../../lib/apiConfig';
 import { createPortal } from 'react-dom';
 import {
   Calendar,
@@ -62,7 +63,7 @@ export default function FollowUpsView({ user }) {
   const fetchFollowUps = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/followups');
+      const response = await fetch(`${API_BASE_URL}/api/followups`);
       const data = await response.json();
       if (data.success) {
         setFollowUps(data.followUps || []);
@@ -135,7 +136,7 @@ export default function FollowUpsView({ user }) {
     try {
       if (editingId) {
         // Update
-        const response = await fetch(`http://localhost:5000/api/followups/${editingId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/followups/${editingId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData)
@@ -155,7 +156,7 @@ export default function FollowUpsView({ user }) {
           ...formData,
           createdBy: currentUser?.name || currentUser?.email || 'Admin',
         };
-        const response = await fetch('http://localhost:5000/api/followups', {
+        const response = await fetch(`${API_BASE_URL}/api/followups`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -178,7 +179,7 @@ export default function FollowUpsView({ user }) {
   const handleDelete = async (id, leadName) => {
     if (window.confirm(`Are you sure you want to delete the callback for "${leadName}"?`)) {
       try {
-        const response = await fetch(`http://localhost:5000/api/followups/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/followups/${id}`, {
           method: 'DELETE'
         });
         const data = await response.json();
@@ -196,7 +197,7 @@ export default function FollowUpsView({ user }) {
   const handleStatusToggle = async (followUp) => {
     const newStatus = followUp.status === 'Pending' ? 'Completed' : 'Pending';
     try {
-      const response = await fetch(`http://localhost:5000/api/followups/${followUp._id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/followups/${followUp._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...followUp, status: newStatus })

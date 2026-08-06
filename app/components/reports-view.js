@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { API_BASE_URL } from '../../lib/apiConfig';
 import { createPortal } from 'react-dom';
 import {
   Calendar,
@@ -65,9 +66,9 @@ export default function ReportsView({ user: currentUser }) {
     setError('');
     try {
       const [usersRes, leadsRes, followUpsRes] = await Promise.all([
-        fetch('http://localhost:5000/api/users').then(res => res.json()).catch(() => ({ success: false })),
-        fetch('http://localhost:5000/api/leads').then(res => res.json()).catch(() => ({ success: false })),
-        fetch('http://localhost:5000/api/followups').then(res => res.json()).catch(() => ({ success: false }))
+        fetch(`${API_BASE_URL}/api/users`).then(res => res.json()).catch(() => ({ success: false })),
+        fetch(`${API_BASE_URL}/api/leads`).then(res => res.json()).catch(() => ({ success: false })),
+        fetch(`${API_BASE_URL}/api/followups`).then(res => res.json()).catch(() => ({ success: false }))
       ]);
 
       if (usersRes.success) {

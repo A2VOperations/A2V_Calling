@@ -10,6 +10,7 @@ import FollowUpsView from '../components/follow-ups-view';
 import ReportsView from '../components/reports-view';
 import SettingsView from '../components/settings-view';
 import UserManagement from '../components/user-management';
+import { API_BASE_URL } from '../../lib/apiConfig';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -31,7 +32,7 @@ export default function Dashboard() {
 
   const fetchUsers = async (currentUser) => {
     try {
-      const response = await fetch('http://localhost:5000/api/users', {
+      const response = await fetch(`${API_BASE_URL}/api/users`, {
         headers: {
           'x-user-id': currentUser?.id || currentUser?._id || ''
         }
@@ -47,7 +48,7 @@ export default function Dashboard() {
 
   const fetchLeads = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/leads');
+      const response = await fetch(`${API_BASE_URL}/api/leads`);
       const data = await response.json();
       if (data.success) {
         const formattedLeads = data.leads.map(l => ({ ...l, id: l._id }));
@@ -60,7 +61,7 @@ export default function Dashboard() {
 
   const fetchFollowUps = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/followups');
+      const response = await fetch(`${API_BASE_URL}/api/followups`);
       const data = await response.json();
       if (data.success) {
         const formattedTodos = data.followUps.map(f => ({
@@ -126,7 +127,7 @@ export default function Dashboard() {
     if (!newTodoText.trim()) return;
 
     try {
-      const response = await fetch('http://localhost:5000/api/followups', {
+      const response = await fetch(`${API_BASE_URL}/api/followups`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -159,7 +160,7 @@ export default function Dashboard() {
     setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
 
     try {
-      await fetch(`http://localhost:5000/api/followups/${id}`, {
+      await fetch(`${API_BASE_URL}/api/followups/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
@@ -176,7 +177,7 @@ export default function Dashboard() {
     setTodos((prev) => prev.filter((t) => t.id !== id));
 
     try {
-      await fetch(`http://localhost:5000/api/followups/${id}`, {
+      await fetch(`${API_BASE_URL}/api/followups/${id}`, {
         method: 'DELETE'
       });
     } catch (err) {

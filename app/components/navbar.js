@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_BASE_URL } from '../../lib/apiConfig';
 
 const Navbar = ({ user, onToggleSidebar, leads = [], setActiveTab }) => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -30,7 +31,7 @@ const Navbar = ({ user, onToggleSidebar, leads = [], setActiveTab }) => {
 
   const fetchFollowUps = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/followups');
+      const response = await fetch(`${API_BASE_URL}/api/followups`);
       const data = await response.json();
       if (data.success) {
         // Filter only pending follow-ups that are due in the next 24 hours or overdue

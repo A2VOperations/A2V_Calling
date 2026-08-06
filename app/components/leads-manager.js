@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_BASE_URL } from '../../lib/apiConfig';
 import { createPortal } from 'react-dom';
 import {
   User,
@@ -422,7 +423,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
   const handleDeleteLead = async (id, name) => {
     if (window.confirm(`Are you sure you want to delete lead: "${name}"?`)) {
       try {
-        const response = await fetch(`http://localhost:5000/api/leads/${id}`, { method: 'DELETE' });
+        const response = await fetch(`${API_BASE_URL}/api/leads/${id}`, { method: 'DELETE' });
         const data = await response.json();
         if (data.success) {
           setLeads(prev => prev.filter(l => l.id !== id));
@@ -466,7 +467,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
 
     try {
       if (leadModal.type === 'add') {
-        const response = await fetch('http://localhost:5000/api/leads', {
+        const response = await fetch(`${API_BASE_URL}/api/leads`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -480,7 +481,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
           return;
         }
       } else {
-        const response = await fetch(`http://localhost:5000/api/leads/${leadModal.leadId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/leads/${leadModal.leadId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
