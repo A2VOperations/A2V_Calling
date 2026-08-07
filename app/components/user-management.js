@@ -301,7 +301,7 @@ export default function UserManagement({ user: currentUser }) {
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="h-10 px-3 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 bg-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10 transition-all cursor-pointer min-w-[140px]"
+            className="h-10 px-3 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 bg-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10 transition-all cursor-pointer min-w-35"
           >
             <option value="all">All Roles</option>
             <option value="admin">Admin</option>
@@ -314,7 +314,7 @@ export default function UserManagement({ user: currentUser }) {
       </div>
 
       {/* Users Table Card */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden min-h-[200px] flex flex-col justify-center">
+      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden min-h-50 flex flex-col justify-center">
         {loading ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12">
             <svg className="animate-spin h-7 w-7 text-sky-500" fill="none" viewBox="0 0 24 24">
@@ -410,7 +410,7 @@ export default function UserManagement({ user: currentUser }) {
                             value={currentRole}
                             disabled={isSelf || rowState === 'updating'}
                             onChange={(e) => handleRoleChange(userObj._id, e.target.value)}
-                            className={`h-9 px-2.5 border rounded-xl text-xs font-semibold outline-none transition-all min-w-[130px] ${isSelf
+                            className={`h-9 px-2.5 border rounded-xl text-xs font-semibold outline-none transition-all min-w-32.5 ${isSelf
                               ? 'bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed'
                               : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 focus:border-sky-500 cursor-pointer'
                               }`}
@@ -470,7 +470,7 @@ export default function UserManagement({ user: currentUser }) {
 
       {/* Admin Create User Modal */}
       {isAddUserModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[9999] flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-9999 flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200/80 w-full max-w-md overflow-hidden animate-slide-up">
 
             <div className="bg-slate-50 border-b border-slate-100 px-6 py-4.5 flex justify-between items-center">

@@ -253,7 +253,7 @@ export default function DashboardOverview({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
         {/* Card 1: Total Leads */}
-        <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-[135px]">
+        <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-33.75">
           <div className="flex justify-between items-start">
             <div>
               <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase block">Total Leads</span>
@@ -273,7 +273,7 @@ export default function DashboardOverview({
         </div>
 
         {/* Card 2: Total Users */}
-        <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between h-[135px]">
+        <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex items-center justify-between h-33.75">
           <div className="flex-1">
             <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase block">Total Users</span>
             <span className="text-2xl font-extrabold text-slate-800 mt-1 block">{systemUsersCount.toLocaleString()}</span>
@@ -293,7 +293,7 @@ export default function DashboardOverview({
         </div>
 
         {/* Card 3: Total Sales */}
-        <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-[135px]">
+        <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-33.75">
           <div className="flex justify-between items-start">
             <div>
               <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase block">Total Sales</span>
@@ -313,7 +313,7 @@ export default function DashboardOverview({
         </div>
 
         {/* Card 4: Pending Tasks */}
-        <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-[135px]">
+        <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-33.75">
           <div className="flex justify-between items-start">
             <div>
               <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase block">Pending Callbacks</span>
@@ -347,7 +347,7 @@ export default function DashboardOverview({
       {/* Middle Row (Analytics Chart + Interactive To-Do + Earnings) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Analytics Box: Prospect Engagement Trends (World-Class UI) */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between h-[360px] relative overflow-hidden group">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between h-90 relative overflow-hidden group">
           {/* Top Header & Report Switcher */}
           <div>
             <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
@@ -433,7 +433,7 @@ export default function DashboardOverview({
         </div>
 
         {/* Interactive To-Do List */}
-        <div className="bg-white border border-slate-200/80 rounded-xl p-6 shadow-sm flex flex-col justify-between h-[360px]">
+        <div className="bg-white border border-slate-200/80 rounded-xl p-6 shadow-sm flex flex-col justify-between h-90">
           <div>
             <div className="flex justify-between items-center mb-1">
               <h3 className="font-bold text-slate-800 text-sm">Follow-up Tasks</h3>
@@ -504,7 +504,7 @@ export default function DashboardOverview({
         </div>
 
         {/* Total Earnings Trendline Graph (Dynamic Backend Data) */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between h-[360px] relative overflow-hidden group">
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between h-90 relative overflow-hidden group">
           <div>
             <div className="flex justify-between items-center mb-1">
               <h3 className="font-extrabold text-slate-800 text-sm">Earnings Growth</h3>
@@ -606,12 +606,12 @@ export default function DashboardOverview({
                             <div className="w-7 h-7 rounded-full bg-sky-50 text-sky-600 border border-sky-200/50 flex items-center justify-center font-black text-[10px] uppercase shrink-0">
                               {(lead.name || 'L').substring(0, 2)}
                             </div>
-                            <span className="font-bold text-slate-800 truncate max-w-[120px]">{lead.name || 'Unnamed'}</span>
+                            <span className="font-bold text-slate-800 truncate max-w-30">{lead.name || 'Unnamed'}</span>
                           </div>
                         </td>
                         <td className="py-3 pr-2">
                           <div className="flex flex-col">
-                            <span className="truncate max-w-[140px] text-slate-700">{lead.email || 'No Email'}</span>
+                            <span className="truncate max-w-35 text-slate-700">{lead.email || 'No Email'}</span>
                             <span className="text-[10px] text-slate-400 font-mono">{lead.phone || 'No Phone'}</span>
                           </div>
                         </td>

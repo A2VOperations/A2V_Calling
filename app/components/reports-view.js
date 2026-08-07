@@ -42,7 +42,7 @@ export default function ReportsView({ user: currentUser }) {
 
   // Filters & State
   const [selectedUser, setSelectedUser] = useState(() => isAdmin ? 'all' : (loggedInUser?.name || loggedInUser?.email || 'all'));
-  
+
   // Default to current year-month (e.g. 2026-08)
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const d = new Date();
@@ -236,7 +236,7 @@ export default function ReportsView({ user: currentUser }) {
   const userActivenessList = useMemo(() => {
     return allUserOptions.map(usr => {
       const uName = usr.name || usr.email;
-      
+
       // Leads added by user in selected month
       const monthLeads = leads.filter(l => {
         const dateStr = formatYYYYMMDD(l.createdAt || l.leadDate);
@@ -258,7 +258,7 @@ export default function ReportsView({ user: currentUser }) {
       const totalCompletedFollowUps = followUps.filter(f => f.createdBy?.toLowerCase() === uName.toLowerCase() && f.status === 'Completed');
 
       const monthTotalActivities = monthLeads.length + monthCompletedFollowUps.length;
-      
+
       // Active days count for user
       const userActiveDays = monthlyDays.filter(d => {
         const dayUserLeads = d.leadsList.filter(l => l.createdBy?.toLowerCase() === uName.toLowerCase());
@@ -302,7 +302,7 @@ export default function ReportsView({ user: currentUser }) {
   const exportReportCSV = () => {
     let csvContent = "data:text/csv;charset=utf-8,";
     csvContent += "User Name,Email,Role,Leads Added (Month),Follow-ups Completed (Month),Total Activities (Month),Active Days\n";
-    
+
     userActivenessList.forEach(u => {
       csvContent += `"${u.name}","${u.email}","${u.role}",${u.monthLeadsCount},${u.monthCompletedFollowUpsCount},${u.monthTotalActivities},${u.userActiveDays}\n`;
     });
@@ -324,7 +324,7 @@ export default function ReportsView({ user: currentUser }) {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
+      <div className="flex flex-col items-center justify-center min-h-100 gap-3">
         <RefreshCw className="w-8 h-8 text-sky-500 animate-spin" />
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
           Fetching User Activeness & Daily Reports...
@@ -489,11 +489,10 @@ export default function ReportsView({ user: currentUser }) {
       <div className="flex items-center border-b border-slate-200 gap-6">
         <button
           onClick={() => setActiveTab('dayReport')}
-          className={`pb-3 text-xs font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
-            activeTab === 'dayReport'
+          className={`pb-3 text-xs font-bold transition-all relative flex items-center gap-2 cursor-pointer ${activeTab === 'dayReport'
               ? 'text-sky-600 border-b-2 border-sky-600'
               : 'text-slate-500 hover:text-slate-800'
-          }`}
+            }`}
         >
           <Calendar className="w-4 h-4" />
           <span>Activities in a Day Report ({selectedMonth})</span>
@@ -502,11 +501,10 @@ export default function ReportsView({ user: currentUser }) {
         {isAdmin && (
           <button
             onClick={() => setActiveTab('userLeaderboard')}
-            className={`pb-3 text-xs font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
-              activeTab === 'userLeaderboard'
+            className={`pb-3 text-xs font-bold transition-all relative flex items-center gap-2 cursor-pointer ${activeTab === 'userLeaderboard'
                 ? 'text-sky-600 border-b-2 border-sky-600'
                 : 'text-slate-500 hover:text-slate-800'
-            }`}
+              }`}
           >
             <Users className="w-4 h-4" />
             <span>User Activeness Leaderboard ({userActivenessList.length})</span>
@@ -555,7 +553,7 @@ export default function ReportsView({ user: currentUser }) {
               {monthlyDays.map((d) => {
                 let bgStyle = "bg-slate-50/70 border-slate-200/70 hover:border-slate-300";
                 let textBadgeStyle = "text-slate-600";
-                
+
                 if (d.intensity === 'high') {
                   bgStyle = "bg-emerald-50/80 border-emerald-300 hover:border-emerald-500 shadow-2xs";
                   textBadgeStyle = "text-emerald-700 font-bold";
@@ -571,7 +569,7 @@ export default function ReportsView({ user: currentUser }) {
                   <button
                     key={d.dateStr}
                     onClick={() => setSelectedDayDetail(d.dateStr)}
-                    className={`p-3.5 rounded-xl border text-left transition-all flex flex-col justify-between min-h-[96px] cursor-pointer group ${bgStyle}`}
+                    className={`p-3.5 rounded-xl border text-left transition-all flex flex-col justify-between min-h-24 cursor-pointer group ${bgStyle}`}
                   >
                     <div className="flex items-center justify-between w-full">
                       <span className="text-xs font-extrabold text-slate-800 group-hover:text-sky-600 transition-colors">
@@ -657,10 +655,9 @@ export default function ReportsView({ user: currentUser }) {
                         <span className="font-bold text-emerald-700">{d.completedFollowUpsCount}</span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-1 rounded-md text-xs font-extrabold ${
-                          d.totalActivities >= 5 ? 'bg-emerald-100 text-emerald-800' :
-                          d.totalActivities >= 1 ? 'bg-sky-100 text-sky-800' : 'bg-slate-100 text-slate-500'
-                        }`}>
+                        <span className={`px-2 py-1 rounded-md text-xs font-extrabold ${d.totalActivities >= 5 ? 'bg-emerald-100 text-emerald-800' :
+                            d.totalActivities >= 1 ? 'bg-sky-100 text-sky-800' : 'bg-slate-100 text-slate-500'
+                          }`}>
                           {d.totalActivities} actions
                         </span>
                       </td>
@@ -811,7 +808,7 @@ export default function ReportsView({ user: currentUser }) {
 
       {/* FULL-SCREEN DAY DETAIL MODAL */}
       {selectedDayObj && isClient && createPortal(
-        <div className="fixed inset-0 z-[99999] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-0 md:p-6 animate-fade-in font-sans">
+        <div className="fixed inset-0 z-99999 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-0 md:p-6 animate-fade-in font-sans">
           <div className="bg-white w-full h-full md:max-w-6xl md:h-[92vh] md:rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
             {/* Modal Header */}
             <div className="bg-white px-6 py-4 border-b border-slate-200/80 flex items-center justify-between shadow-2xs shrink-0">
@@ -933,9 +930,8 @@ export default function ReportsView({ user: currentUser }) {
                             </div>
                           </div>
                           <div className="text-right">
-                            <span className={`px-2.5 py-1 rounded-md font-bold text-[11px] ${
-                              fu.status === 'Completed' ? 'bg-purple-100 text-purple-800' : 'bg-amber-100 text-amber-800'
-                            }`}>
+                            <span className={`px-2.5 py-1 rounded-md font-bold text-[11px] ${fu.status === 'Completed' ? 'bg-purple-100 text-purple-800' : 'bg-amber-100 text-amber-800'
+                              }`}>
                               {fu.status || 'Pending'}
                             </span>
                             <div className="text-[11px] text-slate-400 font-medium mt-1">

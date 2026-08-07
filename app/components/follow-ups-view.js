@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   Plus,
   Search,
-  Filter,
   Trash2,
   Edit3,
   Check,
@@ -23,8 +22,6 @@ import {
   ArrowUpDown,
   FileText,
   Tag,
-  ChevronRight,
-  TrendingUp,
   AlertCircle
 } from 'lucide-react';
 
@@ -33,7 +30,7 @@ export default function FollowUpsView({ user }) {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  
+
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // all, pending, today, overdue, completed
@@ -56,9 +53,7 @@ export default function FollowUpsView({ user }) {
     setTimeout(() => setToast(null), 3000);
   };
 
-  useEffect(() => {
-    fetchFollowUps();
-  }, []);
+
 
   const fetchFollowUps = async () => {
     setLoading(true);
@@ -75,6 +70,9 @@ export default function FollowUpsView({ user }) {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    fetchFollowUps();
+  }, []);
 
   // Helper to format ISO string for datetime-local input
   const toDateTimeLocalString = (dateObj) => {
@@ -224,7 +222,7 @@ export default function FollowUpsView({ user }) {
     const total = followUps.length;
     const completed = followUps.filter(f => f.status === 'Completed').length;
     const pending = followUps.filter(f => f.status === 'Pending').length;
-    
+
     const now = new Date();
     const todayStr = now.toDateString();
 
@@ -384,14 +382,13 @@ export default function FollowUpsView({ user }) {
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in relative pb-10">
-      
+
       {/* Floating Toast Notification */}
       {toast && (
-        <div className={`fixed top-5 right-5 z-[9999] px-4 py-3 rounded-xl shadow-lg border text-xs font-semibold flex items-center gap-2 animate-bounce transition-all ${
-          toast.type === 'error' 
-            ? 'bg-rose-950/90 text-rose-200 border-rose-800' 
-            : 'bg-slate-900 text-emerald-400 border-slate-700'
-        }`}>
+        <div className={`fixed top-5 right-5 z-9999 px-4 py-3 rounded-xl shadow-lg border text-xs font-semibold flex items-center gap-2 animate-bounce transition-all ${toast.type === 'error'
+          ? 'bg-rose-950/90 text-rose-200 border-rose-800'
+          : 'bg-slate-900 text-emerald-400 border-slate-700'
+          }`}>
           {toast.type === 'error' ? <AlertCircle className="w-4 h-4 text-rose-400" /> : <Sparkles className="w-4 h-4 text-emerald-400" />}
           <span>{toast.message}</span>
         </div>
@@ -422,7 +419,7 @@ export default function FollowUpsView({ user }) {
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-sky-500' : ''}`} />
           </button>
-          <button 
+          <button
             onClick={handleOpenAddModal}
             className="px-4 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-600/20 transition-all flex items-center gap-2 cursor-pointer"
           >
@@ -495,19 +492,19 @@ export default function FollowUpsView({ user }) {
 
       {/* Controls Bar: Search, Category Tabs & Sort */}
       <div className="bg-white border border-slate-200/80 p-4 rounded-2xl shadow-xs flex flex-wrap items-center justify-between gap-4">
-        
+
         {/* Search Input */}
-        <div className="relative flex-1 min-w-[240px]">
+        <div className="relative flex-1 min-w-60">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search lead name, phone number, or notes..."
             className="w-full h-10 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:border-sky-500 outline-none transition-all"
           />
           {searchQuery && (
-            <button 
+            <button
               onClick={() => setSearchQuery('')}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
             >
@@ -528,16 +525,14 @@ export default function FollowUpsView({ user }) {
             <button
               key={tab.id}
               onClick={() => setStatusFilter(tab.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                statusFilter === tab.id
-                  ? 'bg-white text-sky-600 shadow-xs border border-slate-200/80'
-                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${statusFilter === tab.id
+                ? 'bg-white text-sky-600 shadow-xs border border-slate-200/80'
+                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
+                }`}
             >
               <span>{tab.label}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                statusFilter === tab.id ? 'bg-sky-100 text-sky-700' : 'bg-slate-200 text-slate-600'
-              }`}>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${statusFilter === tab.id ? 'bg-sky-100 text-sky-700' : 'bg-slate-200 text-slate-600'
+                }`}>
                 {tab.count}
               </span>
             </button>
@@ -583,7 +578,7 @@ export default function FollowUpsView({ user }) {
           <div>
             <h4 className="text-base font-bold text-slate-800">No follow-ups found</h4>
             <p className="text-xs text-slate-400 max-w-sm mt-1">
-              {searchQuery || statusFilter !== 'all' 
+              {searchQuery || statusFilter !== 'all'
                 ? 'No follow-ups match your active filter criteria. Try clearing search or switching tabs.'
                 : 'You have no scheduled follow-up callbacks yet. Click below to add your first client callback.'}
             </p>
@@ -614,24 +609,22 @@ export default function FollowUpsView({ user }) {
             const initials = getInitials(f.leadName);
 
             return (
-              <div 
-                key={f._id} 
-                className={`bg-white border rounded-2xl p-5 shadow-xs transition-all duration-200 flex flex-col justify-between gap-4 group ${
-                  isCompleted 
-                    ? 'border-emerald-200/60 bg-emerald-50/10 opacity-80' 
-                    : 'border-slate-200/90 hover:border-sky-300 hover:shadow-md'
-                }`}
+              <div
+                key={f._id}
+                className={`bg-white border rounded-2xl p-5 shadow-xs transition-all duration-200 flex flex-col justify-between gap-4 group ${isCompleted
+                  ? 'border-emerald-200/60 bg-emerald-50/10 opacity-80'
+                  : 'border-slate-200/90 hover:border-sky-300 hover:shadow-md'
+                  }`}
               >
                 {/* Card Header & Lead Info */}
                 <div>
                   <div className="flex items-start justify-between gap-3">
                     {/* Lead Avatar & Name */}
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-extrabold text-xs shrink-0 shadow-xs border ${
-                        isCompleted 
-                          ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
-                          : 'bg-sky-600 text-white border-transparent'
-                      }`}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-extrabold text-xs shrink-0 shadow-xs border ${isCompleted
+                        ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                        : 'bg-sky-600 text-white border-transparent'
+                        }`}>
                         {initials}
                       </div>
 
@@ -641,7 +634,7 @@ export default function FollowUpsView({ user }) {
                         </h3>
                         {f.phoneNumber ? (
                           <div className="flex items-center gap-2 mt-0.5">
-                            <a 
+                            <a
                               href={`tel:${f.phoneNumber}`}
                               className="text-[11px] font-mono font-medium text-slate-500 hover:text-sky-600 flex items-center gap-1 transition-colors"
                               title="Click to dial"
@@ -691,11 +684,10 @@ export default function FollowUpsView({ user }) {
                   {/* Status Toggle Button */}
                   <button
                     onClick={() => handleStatusToggle(f)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                      isCompleted
-                        ? 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
-                        : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/80 shadow-2xs'
-                    }`}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${isCompleted
+                      ? 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
+                      : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/80 shadow-2xs'
+                      }`}
                   >
                     {isCompleted ? (
                       <>
@@ -704,7 +696,7 @@ export default function FollowUpsView({ user }) {
                       </>
                     ) : (
                       <>
-                        <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" />
+                        <Check className="w-3.5 h-3.5 text-emerald-600 stroke-3" />
                         <span>Mark Complete</span>
                       </>
                     )}
@@ -737,9 +729,9 @@ export default function FollowUpsView({ user }) {
 
       {/* Add / Edit Follow-up Modal */}
       {isModalOpen && typeof window !== 'undefined' && createPortal(
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[9999] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-9999 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-scale-up my-auto">
-            
+
             {/* Modal Header */}
             <div className="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
               <div className="flex items-center gap-2.5">
@@ -753,7 +745,7 @@ export default function FollowUpsView({ user }) {
                   <p className="text-[11px] text-slate-300">Set reminder details and client info</p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setIsModalOpen(false)}
                 className="p-1 text-slate-400 hover:text-white rounded-lg transition-colors"
               >
@@ -763,15 +755,15 @@ export default function FollowUpsView({ user }) {
 
             {/* Modal Form */}
             <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
-              
+
               {/* Lead Name */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5 text-slate-400" />
                   <span>Lead Name <span className="text-rose-500">*</span></span>
                 </label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={formData.leadName}
                   onChange={e => setFormData({ ...formData, leadName: e.target.value })}
                   placeholder="e.g. John Smith or Acme Corp"
@@ -786,8 +778,8 @@ export default function FollowUpsView({ user }) {
                   <Phone className="w-3.5 h-3.5 text-slate-400" />
                   <span>Phone Number</span>
                 </label>
-                <input 
-                  type="tel" 
+                <input
+                  type="tel"
                   value={formData.phoneNumber}
                   onChange={e => setFormData({ ...formData, phoneNumber: e.target.value })}
                   placeholder="+1 (555) 000-0000"
@@ -803,9 +795,9 @@ export default function FollowUpsView({ user }) {
                     <span>Scheduled Date & Time <span className="text-rose-500">*</span></span>
                   </span>
                 </label>
-                
-                <input 
-                  type="datetime-local" 
+
+                <input
+                  type="datetime-local"
                   value={formData.scheduledAt}
                   onChange={e => setFormData({ ...formData, scheduledAt: e.target.value })}
                   className="w-full h-10 rounded-xl border border-slate-200 px-3.5 text-xs font-semibold text-slate-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10 outline-none transition-all cursor-pointer"
@@ -861,25 +853,25 @@ export default function FollowUpsView({ user }) {
                   <FileText className="w-3.5 h-3.5 text-slate-400" />
                   <span>Callback Notes / Reason</span>
                 </label>
-                <textarea 
+                <textarea
                   value={formData.description}
                   onChange={e => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Add details about the call topic, client requirements, or previous conversation notes..."
-                  className="w-full rounded-xl border border-slate-200 p-3 text-xs font-medium text-slate-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10 outline-none transition-all min-h-[90px]"
+                  className="w-full rounded-xl border border-slate-200 p-3 text-xs font-medium text-slate-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10 outline-none transition-all min-h-22.5"
                 />
               </div>
 
               {/* Footer Actions */}
               <div className="flex justify-end gap-2.5 mt-3 pt-3 border-t border-slate-100">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setIsModalOpen(false)}
                   className="px-4 py-2.5 border border-slate-200 text-slate-600 font-bold text-xs rounded-xl hover:bg-slate-50 transition-all uppercase tracking-wider"
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-md transition-all uppercase tracking-wider flex items-center gap-2 cursor-pointer"
                 >
                   <span>{editingId ? 'Save Changes' : 'Schedule Callback'}</span>
