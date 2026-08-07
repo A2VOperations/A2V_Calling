@@ -723,42 +723,6 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
         })}
       </div>
 
-      {/* Financial Overview KPI Banner Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-100 block">Total Paid Amount</span>
-            <span className="text-2xl font-black font-mono mt-0.5 block">₹{totalPaidSum.toLocaleString('en-IN')}</span>
-            <span className="text-[10px] font-medium text-emerald-100/90 mt-1 block">Revenue Collected across leads</span>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur-xs flex items-center justify-center text-white shrink-0">
-            <Wallet className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-100 block">Total Pending Balance</span>
-            <span className="text-2xl font-black font-mono mt-0.5 block">₹{totalBalanceSum.toLocaleString('en-IN')}</span>
-            <span className="text-[10px] font-medium text-amber-100/90 mt-1 block">Outstanding receivables</span>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur-xs flex items-center justify-center text-white shrink-0">
-            <CreditCard className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-sky-600 to-indigo-700 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-100 block">Total Deal Pipeline</span>
-            <span className="text-2xl font-black font-mono mt-0.5 block">₹{totalDealSum.toLocaleString('en-IN')}</span>
-            <span className="text-[10px] font-medium text-sky-100/90 mt-1 block">Combined Total Contract Value</span>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur-xs flex items-center justify-center text-white shrink-0">
-            <DollarSign className="w-6 h-6" />
-          </div>
-        </div>
-      </div>
-
       {/* Filter, Search & View Controls Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-200/80 p-4 rounded-2xl shadow-sm">
         {/* Left Search Bar */}
