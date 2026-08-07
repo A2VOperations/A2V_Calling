@@ -226,7 +226,7 @@ const Navbar = ({ user, onToggleSidebar, leads = [], setActiveTab }) => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                     <p className="text-xs font-bold text-slate-700">No results found</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">No leads or sections matched "{searchTerm}"</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">No leads or sections matched &quot;{searchTerm}&quot;</p>
                   </div>
                 )}
               </div>
@@ -288,7 +288,7 @@ const Navbar = ({ user, onToggleSidebar, leads = [], setActiveTab }) => {
                   {!hasNotifications ? (
                     <div className="p-6 text-center">
                       <span className="text-2xl block mb-2">🎉</span>
-                      <p className="text-xs font-semibold text-slate-500">You're all caught up!</p>
+                      <p className="text-xs font-semibold text-slate-500">You&apos;re all caught up!</p>
                       <p className="text-[10px] text-slate-400 mt-1">No upcoming follow-ups due.</p>
                     </div>
                   ) : (
@@ -335,8 +335,8 @@ const Navbar = ({ user, onToggleSidebar, leads = [], setActiveTab }) => {
               <span className="font-bold text-xs leading-tight tracking-wide group-hover:text-sky-400 transition-colors">{user.name}</span>
               <span className="text-[10px] font-semibold text-slate-400 leading-tight">{user.email}</span>
             </div>
-            <div className="w-9 h-9 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center font-extrabold text-sm uppercase text-sky-400 select-none shadow group-hover:border-sky-500 transition-colors">
-              {user.name?.substring(0, 2)}
+            <div className="w-9 h-9 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center font-extrabold text-xl uppercase text-sky-400 select-none shadow group-hover:border-sky-500 transition-colors">
+              {user.name?.substring(0, 1)}
             </div>
           </div>
         )}

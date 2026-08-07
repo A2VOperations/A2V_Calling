@@ -70,7 +70,7 @@ export default function Home() {
 
         {/* Brand Header */}
         <div className="flex items-center gap-2.5 mb-6 select-none">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white font-black text-lg shadow-md shadow-sky-500/20">
+          <div className="w-10 h-10 rounded-xl bg-sky-600 flex items-center justify-center text-white font-black text-lg shadow-md shadow-sky-600/20">
             A2V
           </div>
           <div className="flex flex-col">
@@ -139,7 +139,7 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="mt-4 w-full h-11 rounded-xl bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 active:scale-[0.98] text-xs font-bold text-white shadow-md shadow-sky-500/20 cursor-pointer transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center"
+                className="mt-4 w-full h-11 rounded-xl bg-sky-600 hover:bg-sky-700 active:scale-[0.98] text-xs font-bold text-white shadow-md shadow-sky-600/20 cursor-pointer transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center"
               >
                 {isLoading ? (
                   <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">

@@ -246,7 +246,7 @@ export default function UserManagement({ user: currentUser }) {
 
           <button
             onClick={() => setIsAddUserModalOpen(true)}
-            className="px-4 py-2 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-500/20 transition-all cursor-pointer flex items-center gap-1.5"
+            className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-600/20 transition-all cursor-pointer flex items-center gap-1.5"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -566,7 +566,7 @@ export default function UserManagement({ user: currentUser }) {
                 <button
                   type="submit"
                   disabled={isCreatingUser}
-                  className="px-4 py-2 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-500/20 transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-600/20 transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                 >
                   {isCreatingUser ? 'Creating...' : 'Create Account'}
                 </button>

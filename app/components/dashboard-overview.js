@@ -17,12 +17,8 @@ export default function DashboardOverview({
   const [trendPeriod, setTrendPeriod] = React.useState('weekly');
 
   // --- Dynamic Calculations based on leads & users ---
-  const totalLeads = leads.length || 1;
   const systemUsersCount = users && users.length > 0 ? users.length : (user ? 1 : 1);
-  const activeLeadsCount = leads.filter(l => l.status === 'Active').length;
-  const activeLeadsPct = Math.round((activeLeadsCount / totalLeads) * 100);
   const contactedLeads = leads.filter(l => l.status === 'Contacted' || l.status === 'Active');
-  const campaignProgress = Math.round((contactedLeads.length / totalLeads) * 100);
 
   // Dynamic engagement data aggregator derived directly from real backend lead timestamps (leadDate / createdAt)
   const getTrendData = () => {
@@ -103,7 +99,7 @@ export default function DashboardOverview({
 
   // Leads created by or assigned to current user
   const currentUserLeads = leads.filter(l => l.createdBy === user?.name || l.createdBy === user?.email);
-  
+
   // Total Deposits based on leads paid amount data
   const realPaidTotal = leads.reduce((sum, l) => sum + (Number(l.paidAmount) || 0), 0);
   const totalDeposits = realPaidTotal > 0 ? realPaidTotal : (leads.reduce((sum, l) => sum + (l.deposit || 0), 0) + (contactedLeads.length * 450) + 15000);
@@ -154,7 +150,7 @@ export default function DashboardOverview({
   const y2 = Math.min(85, Math.max(15, 85 - Math.round((q2 / maxQ) * 65)));
   const y3 = Math.min(85, Math.max(15, 85 - Math.round((q3 / maxQ) * 65)));
   const y4 = Math.min(85, Math.max(15, 85 - Math.round((q4 / maxQ) * 65)));
-  
+
   // Daily Outbound Cost mock based on leads
   const dailyCost = 500 + (contactedLeads.length * 15);
 
@@ -164,7 +160,7 @@ export default function DashboardOverview({
     acc[geo] = (acc[geo] || 0) + 1;
     return acc;
   }, {});
-  
+
   const geoEntries = Object.entries(geoCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const totalLeadsCount = leads.length || 1;
   const flags = {
@@ -182,7 +178,7 @@ export default function DashboardOverview({
     pct: Math.round((count / totalLeadsCount) * 100),
     color: colors[idx % colors.length]
   }));
-  
+
   if (leads.length === 0) {
     activeGeographies = [
       { country: 'India', flag: '🇮🇳', calls: 0, pct: 0, color: 'bg-sky-500' }
@@ -199,8 +195,8 @@ export default function DashboardOverview({
       {/* Current User Active Session Header Bar */}
       <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white flex items-center justify-center font-black text-base shadow-md shadow-sky-500/20 shrink-0">
-            {(user?.name || user?.email || 'U').substring(0, 2).toUpperCase()}
+          <div className="w-12 h-12 rounded-full bg-sky-600 text-white flex items-center justify-center font-bold text-2xl shadow-md shadow-sky-600/20 shrink-0">
+            {(user?.name || user?.email || 'U').substring(0, 1).toUpperCase()}
           </div>
           <div>
             <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
@@ -216,23 +212,10 @@ export default function DashboardOverview({
             </p>
           </div>
         </div>
-
-        <div className="flex items-center gap-3 bg-slate-50 border border-slate-200/70 p-3 rounded-xl">
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">My Created Leads</span>
-            <span className="text-sm font-extrabold text-slate-800">{currentUserLeads.length} {currentUserLeads.length === 1 ? 'Lead' : 'Leads'}</span>
-          </div>
-          <button
-            onClick={() => setActiveTab('leads')}
-            className="px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer shadow-xs"
-          >
-            Manage Leads
-          </button>
-        </div>
       </div>
       {/* Financial Overview Banner Cards (Matching Leads Section) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-5 rounded-2xl shadow-sm flex items-center justify-between">
+        <div className="bg-emerald-600 text-white p-5 rounded-2xl shadow-sm flex items-center justify-between">
           <div>
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-100 block">TOTAL PAID AMOUNT</span>
             <span className="text-2xl font-black font-mono mt-0.5 block">₹{totalPaidSum.toLocaleString('en-IN')}</span>
@@ -243,7 +226,7 @@ export default function DashboardOverview({
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white p-5 rounded-2xl shadow-sm flex items-center justify-between">
+        <div className="bg-amber-600 text-white p-5 rounded-2xl shadow-sm flex items-center justify-between">
           <div>
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-100 block">TOTAL PENDING BALANCE</span>
             <span className="text-2xl font-black font-mono mt-0.5 block">₹{totalBalanceSum.toLocaleString('en-IN')}</span>
@@ -254,7 +237,7 @@ export default function DashboardOverview({
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-sky-600 to-indigo-700 text-white p-5 rounded-2xl shadow-sm flex items-center justify-between">
+        <div className="bg-blue-600 text-white p-5 rounded-2xl shadow-sm flex items-center justify-between">
           <div>
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-100 block">TOTAL DEAL PIPELINE</span>
             <span className="text-2xl font-black font-mono mt-0.5 block">₹{totalDealSum.toLocaleString('en-IN')}</span>
@@ -268,7 +251,7 @@ export default function DashboardOverview({
 
       {/* Top KPI Metrics Row (4 Cards) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        
+
         {/* Card 1: Total Leads */}
         <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-[135px]">
           <div className="flex justify-between items-start">
@@ -283,13 +266,7 @@ export default function DashboardOverview({
           {/* SVG Sparkline */}
           <div className="h-8 w-full mt-2">
             <svg className="w-full h-full" viewBox="0 0 100 30" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path d="M0,25 Q15,10 30,18 T60,5 T90,15 L100,15 L100,30 L0,30 Z" fill="url(#skyGrad)" />
+              <path d="M0,25 Q15,10 30,18 T60,5 T90,15 L100,15 L100,30 L0,30 Z" fill="#0ea5e9" fillOpacity="0.15" />
               <path d="M0,25 Q15,10 30,18 T60,5 T90,15 L100,15" fill="none" stroke="#0ea5e9" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </div>
@@ -329,13 +306,7 @@ export default function DashboardOverview({
           {/* Green Sparkline */}
           <div className="h-8 w-full mt-2">
             <svg className="w-full h-full" viewBox="0 0 100 30" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="emeraldGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path d="M0,25 Q20,10 40,18 T80,5 T100,2 L100,30 L0,30 Z" fill="url(#emeraldGrad)" />
+              <path d="M0,25 Q20,10 40,18 T80,5 T100,2 L100,30 L0,30 Z" fill="#10b981" fillOpacity="0.15" />
               <path d="M0,25 Q20,10 40,18 T80,5 T100,2" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </div>
@@ -363,9 +334,9 @@ export default function DashboardOverview({
               <span>{todoCompletionPct}%</span>
             </div>
             <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-              <div 
-                className="bg-amber-500 h-full transition-all duration-500" 
-                style={{ width: `${todoCompletionPct}%` }} 
+              <div
+                className="bg-amber-500 h-full transition-all duration-500"
+                style={{ width: `${todoCompletionPct}%` }}
               />
             </div>
           </div>
@@ -398,31 +369,28 @@ export default function DashboardOverview({
               <div className="bg-slate-100/90 p-1 rounded-full border border-slate-200/80 flex items-center shadow-2xs">
                 <button
                   onClick={() => setTrendPeriod('weekly')}
-                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                    trendPeriod === 'weekly'
-                      ? 'bg-white text-sky-600 shadow-sm ring-1 ring-slate-200/60'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${trendPeriod === 'weekly'
+                    ? 'bg-white text-sky-600 shadow-sm ring-1 ring-slate-200/60'
+                    : 'text-slate-500 hover:text-slate-800'
+                    }`}
                 >
                   Weekly
                 </button>
                 <button
                   onClick={() => setTrendPeriod('monthly')}
-                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                    trendPeriod === 'monthly'
-                      ? 'bg-white text-sky-600 shadow-sm ring-1 ring-slate-200/60'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${trendPeriod === 'monthly'
+                    ? 'bg-white text-sky-600 shadow-sm ring-1 ring-slate-200/60'
+                    : 'text-slate-500 hover:text-slate-800'
+                    }`}
                 >
                   Monthly
                 </button>
                 <button
                   onClick={() => setTrendPeriod('yearly')}
-                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                    trendPeriod === 'yearly'
-                      ? 'bg-white text-sky-600 shadow-sm ring-1 ring-slate-200/60'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${trendPeriod === 'yearly'
+                    ? 'bg-white text-sky-600 shadow-sm ring-1 ring-slate-200/60'
+                    : 'text-slate-500 hover:text-slate-800'
+                    }`}
                 >
                   Yearly
                 </button>
@@ -449,8 +417,8 @@ export default function DashboardOverview({
 
                 {/* Bar Track & Fill */}
                 <div className="w-full bg-slate-100/80 hover:bg-slate-200/50 rounded-t-lg h-full flex items-end overflow-hidden p-0.5 transition-colors">
-                  <div 
-                    className="w-full bg-gradient-to-t from-sky-500 via-indigo-500 to-violet-500 group-hover/bar:from-sky-600 group-hover/bar:to-violet-600 transition-all duration-300 rounded-t-md shadow-xs"
+                  <div
+                    className="w-full bg-sky-600 hover:bg-sky-700 transition-all duration-300 rounded-t-md shadow-xs"
                     style={{ height: bar.pct }}
                   />
                 </div>
@@ -474,7 +442,7 @@ export default function DashboardOverview({
               </span>
             </div>
             <p className="text-xs text-slate-400 font-semibold mb-4">Quick task checklist for team outreach</p>
-            
+
             <form onSubmit={handleAddTodo} className="flex gap-2 mb-4">
               <input
                 type="text"
@@ -496,9 +464,9 @@ export default function DashboardOverview({
               {todos.map((todo) => (
                 <div key={todo.id} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100 hover:bg-slate-100/60 transition-colors group">
                   <label className="flex items-center gap-2.5 cursor-pointer text-xs font-semibold text-slate-700 flex-1 min-w-0">
-                    <input 
-                      type="checkbox" 
-                      checked={todo.completed} 
+                    <input
+                      type="checkbox"
+                      checked={todo.completed}
                       onChange={() => toggleTodo(todo.id)}
                       className="rounded border-slate-300 text-sky-500 focus:ring-sky-500 cursor-pointer"
                     />
@@ -506,7 +474,7 @@ export default function DashboardOverview({
                       {todo.text}
                     </span>
                   </label>
-                  <button 
+                  <button
                     onClick={() => deleteTodo(todo.id)}
                     className="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all cursor-pointer p-1"
                   >
@@ -540,11 +508,10 @@ export default function DashboardOverview({
           <div>
             <div className="flex justify-between items-center mb-1">
               <h3 className="font-extrabold text-slate-800 text-sm">Earnings Growth</h3>
-              <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border shadow-2xs ${
-                earningsGrowthPct >= 0
-                  ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
-                  : 'text-rose-700 bg-rose-50 border-rose-200'
-              }`}>
+              <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border shadow-2xs ${earningsGrowthPct >= 0
+                ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                : 'text-rose-700 bg-rose-50 border-rose-200'
+                }`}>
                 {earningsGrowthPct >= 0 ? `+${earningsGrowthPct}%` : `${earningsGrowthPct}%`}
               </span>
             </div>
@@ -556,15 +523,10 @@ export default function DashboardOverview({
           {/* Dynamic Revenue SVG Smooth Curve */}
           <div className="h-40 w-full flex items-end relative my-2">
             <svg className="w-full h-full overflow-visible" viewBox="0 0 200 100" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-                </linearGradient>
-              </defs>
               <path
                 d={`M 10,${y1} Q 50,${(y1 + y2) / 2} 75,${y2} T 140,${y3} T 190,${y4} L 190,100 L 10,100 Z`}
-                fill="url(#lineGrad)"
+                fill="#10b981"
+                fillOpacity="0.15"
               />
               <path
                 d={`M 10,${y1} Q 50,${(y1 + y2) / 2} 75,${y2} T 140,${y3} T 190,${y4}`}
@@ -606,7 +568,7 @@ export default function DashboardOverview({
 
       {/* Bottom Row: Active Leads Table + Active Geographies */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Active Leads List */}
         <div className="bg-white border border-slate-200/80 rounded-xl p-6 shadow-sm lg:col-span-2 overflow-hidden flex flex-col justify-between">
           <div>
@@ -615,7 +577,7 @@ export default function DashboardOverview({
                 <h3 className="font-bold text-slate-800 text-sm">Leads Overview</h3>
                 <p className="text-xs text-slate-400 font-semibold mt-1">Status of current inbound calling campaigns</p>
               </div>
-              <button 
+              <button
                 onClick={() => setActiveTab('leads')}
                 className="text-xs font-bold text-sky-500 hover:text-sky-600 transition-colors flex items-center gap-1 cursor-pointer"
               >
@@ -654,13 +616,12 @@ export default function DashboardOverview({
                           </div>
                         </td>
                         <td className="py-3 pr-2">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-extrabold ${
-                            lead.status === 'Active' ? 'bg-sky-50 text-sky-600 border border-sky-200/60' :
+                          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-extrabold ${lead.status === 'Active' ? 'bg-sky-50 text-sky-600 border border-sky-200/60' :
                             lead.status === 'Contacted' ? 'bg-amber-50 text-amber-600 border border-amber-200/60' :
-                            lead.status === 'New' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60' :
-                            lead.status === 'Follow-up Required' ? 'bg-purple-50 text-purple-600 border border-purple-200/60' :
-                            'bg-slate-50 text-slate-500 border border-slate-200/60'
-                          }`}>
+                              lead.status === 'New' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60' :
+                                lead.status === 'Follow-up Required' ? 'bg-purple-50 text-purple-600 border border-purple-200/60' :
+                                  'bg-slate-50 text-slate-500 border border-slate-200/60'
+                            }`}>
                             {lead.status || 'New'}
                           </span>
                         </td>

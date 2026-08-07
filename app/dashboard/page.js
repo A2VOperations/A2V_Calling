@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '../components/sidebar';
 import Navbar from '../components/navbar';
@@ -25,8 +25,6 @@ export default function Dashboard() {
   // Interactive Leads State with complete fields
   const [leads, setLeads] = useState([]);
   const [users, setUsers] = useState([]);
-  const [isClient, setIsClient] = useState(false);
-
   const [todos, setTodos] = useState([]);
   const [newTodoText, setNewTodoText] = useState('');
 
@@ -46,41 +44,42 @@ export default function Dashboard() {
     }
   };
 
-  const fetchLeads = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/leads`);
-      const data = await response.json();
-      if (data.success) {
-        const formattedLeads = data.leads.map(l => ({ ...l, id: l._id }));
-        setLeads(formattedLeads);
-      }
-    } catch (error) {
-      console.error('Error fetching leads:', error);
-    }
-  };
-
-  const fetchFollowUps = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/followups`);
-      const data = await response.json();
-      if (data.success) {
-        const formattedTodos = data.followUps.map(f => ({
-          id: f._id,
-          text: f.description || `Follow up with ${f.leadName || 'client'}`,
-          completed: f.status === 'Completed'
-        }));
-        setTodos(formattedTodos);
-      }
-    } catch (error) {
-      console.error('Error fetching follow-ups:', error);
-    }
-  };
-
   useEffect(() => {
-    setIsClient(true);
+    const fetchLeads = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/leads`);
+        const data = await response.json();
+        if (data.success) {
+          const formattedLeads = data.leads.map(l => ({ ...l, id: l._id }));
+          setLeads(formattedLeads);
+        }
+      } catch (error) {
+        console.error('Error fetching leads:', error);
+      }
+    };
+
+    const fetchFollowUps = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/followups`);
+        const data = await response.json();
+        if (data.success) {
+          const formattedTodos = data.followUps.map(f => ({
+            id: f._id,
+            text: f.description || `Follow up with ${f.leadName || 'client'}`,
+            completed: f.status === 'Completed'
+          }));
+          setTodos(formattedTodos);
+        }
+      } catch (error) {
+        console.error('Error fetching follow-ups:', error);
+      }
+    };
+
     fetchLeads();
     fetchFollowUps();
   }, []);
+
+
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');

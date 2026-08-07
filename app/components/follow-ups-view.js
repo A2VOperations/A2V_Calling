@@ -424,7 +424,7 @@ export default function FollowUpsView({ user }) {
           </button>
           <button 
             onClick={handleOpenAddModal}
-            className="px-4 py-2.5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-sky-500/20 transition-all flex items-center gap-2 cursor-pointer"
+            className="px-4 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-600/20 transition-all flex items-center gap-2 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Schedule Follow-up</span>
@@ -630,7 +630,7 @@ export default function FollowUpsView({ user }) {
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-extrabold text-xs shrink-0 shadow-xs border ${
                         isCompleted 
                           ? 'bg-emerald-100 text-emerald-700 border-emerald-200' 
-                          : 'bg-gradient-to-br from-sky-500 to-blue-600 text-white border-transparent'
+                          : 'bg-sky-600 text-white border-transparent'
                       }`}>
                         {initials}
                       </div>
@@ -741,7 +741,7 @@ export default function FollowUpsView({ user }) {
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden animate-scale-up my-auto">
             
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white px-6 py-4 flex justify-between items-center">
+            <div className="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 bg-sky-500/20 border border-sky-400/30 rounded-xl text-sky-400">
                   <Calendar className="w-4 h-4" />
@@ -880,7 +880,7 @@ export default function FollowUpsView({ user }) {
                 </button>
                 <button 
                   type="submit" 
-                  className="px-5 py-2.5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition-all uppercase tracking-wider flex items-center gap-2 cursor-pointer"
+                  className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-md transition-all uppercase tracking-wider flex items-center gap-2 cursor-pointer"
                 >
                   <span>{editingId ? 'Save Changes' : 'Schedule Callback'}</span>
                 </button>

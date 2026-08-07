@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
 import { API_BASE_URL } from '../../lib/apiConfig';
 import { createPortal } from 'react-dom';
 import {
@@ -19,7 +21,6 @@ import {
   Edit3,
   Eye,
   X,
-  Check,
   ChevronDown,
   ArrowUpDown,
   Sparkles,
@@ -32,13 +33,7 @@ import {
   Clock,
   AlertCircle,
   XCircle,
-  Map,
-  Share2,
-  Briefcase,
   DollarSign,
-  CreditCard,
-  Wallet,
-  Pencil
 } from 'lucide-react';
 
 // Base Standard Columns requested by user
@@ -53,10 +48,9 @@ const BASE_COLUMNS = [
   { key: 'website', label: 'Website', type: 'url' },
   { key: 'instagram', label: 'Instagram', type: 'url' },
   { key: 'facebook', label: 'Facebook', type: 'url' },
-  { key: 'twitterX', label: 'Twitter X', type: 'url' },
   { key: 'youtube', label: 'YouTube', type: 'url' },
   { key: 'phone', label: 'Phone Number', type: 'text', required: true },
-  { key: 'email', label: 'Email', type: 'email', required: true },
+  { key: 'email', label: 'Email', type: 'email' },
   { key: 'totalAmount', label: 'Total Amount', type: 'currency' },
   { key: 'paidAmount', label: 'Paid Amount', type: 'currency' },
   { key: 'balanceAmount', label: 'Balance Amount', type: 'currency' },
@@ -227,10 +221,6 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
       styles = "bg-indigo-50 text-indigo-700 border-indigo-200/70 hover:bg-indigo-100/80";
       Icon = ExternalLink;
       label = "FB";
-    } else if (key === 'twitterX') {
-      styles = "bg-slate-900 text-slate-100 border-slate-800 hover:bg-slate-800";
-      Icon = ExternalLink;
-      label = "X";
     } else if (key === 'youtube') {
       styles = "bg-rose-50 text-rose-700 border-rose-200/70 hover:bg-rose-100/80";
       Icon = ExternalLink;
@@ -287,7 +277,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
     if (col.key === 'name') {
       return (
         <div className="flex items-center gap-3 min-w-[170px]">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-white flex items-center justify-center font-extrabold text-xs shadow-xs shrink-0">
+          <div className="w-8 h-8 rounded-full bg-sky-600 text-white flex items-center justify-center font-extrabold text-xs shadow-xs shrink-0">
             {(val || 'L').substring(0, 2).toUpperCase()}
           </div>
           <div className="flex flex-col min-w-0">
@@ -326,10 +316,10 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
 
     if (col.key === 'phone') {
       return val ? (
-        <div className="inline-flex items-center gap-1.5 font-mono text-xs text-slate-700 font-semibold">
+        <a href={`tel:${val}`} className="inline-flex items-center gap-1.5 font-mono text-xs text-slate-700 font-semibold">
           <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <span>{val}</span>
-        </div>
+        </a>
       ) : (
         <span className="text-slate-300 font-normal">-</span>
       );
@@ -372,9 +362,8 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
       if (col.key === 'balanceAmount') {
         const isPending = num > 0;
         return (
-          <span className={`inline-flex items-center gap-1 font-mono text-xs font-bold px-2 py-0.5 rounded-md border ${
-            isPending ? 'text-amber-700 bg-amber-50 border-amber-200/70' : 'text-slate-600 bg-slate-100 border-slate-200'
-          }`}>
+          <span className={`inline-flex items-center gap-1 font-mono text-xs font-bold px-2 py-0.5 rounded-md border ${isPending ? 'text-amber-700 bg-amber-50 border-amber-200/70' : 'text-slate-600 bg-slate-100 border-slate-200'
+            }`}>
             ₹{num.toLocaleString('en-IN')}
           </span>
         );
@@ -641,7 +630,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
       {/* Top Header & Overview Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-sky-500 to-indigo-600 text-white rounded-xl shadow-md shadow-sky-500/20">
+          <div className="p-3 bg-sky-600 text-white rounded-full shadow-md shadow-sky-600/20">
             <User className="w-6 h-6" />
           </div>
           <div>
@@ -676,7 +665,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
           </button>
           <button
             onClick={handleOpenAddLead}
-            className="px-4 py-2 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-500/20 transition-all cursor-pointer flex items-center gap-2"
+            className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-600/20 transition-all cursor-pointer flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             <span>Add New Lead</span>
@@ -750,11 +739,10 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
           {/* Advanced Filter Toggle Button */}
           <button
             onClick={() => setIsFilterPanelOpen(prev => !prev)}
-            className={`h-10 px-3.5 border rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-2xs ${
-              isFilterPanelOpen || activeFiltersCount > 0
-                ? 'bg-sky-50 text-sky-700 border-sky-300 ring-2 ring-sky-500/10'
-                : 'bg-slate-50 text-slate-700 border-slate-200/80 hover:bg-slate-100'
-            }`}
+            className={`h-10 px-3.5 border rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-2xs ${isFilterPanelOpen || activeFiltersCount > 0
+              ? 'bg-sky-50 text-sky-700 border-sky-300 ring-2 ring-sky-500/10'
+              : 'bg-slate-50 text-slate-700 border-slate-200/80 hover:bg-slate-100'
+              }`}
           >
             <Filter className="w-4 h-4 text-sky-600" />
             <span>Filters</span>
@@ -1146,13 +1134,13 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
                 key={lead.id}
                 className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-4 group relative overflow-hidden"
               >
-                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-sky-400 to-indigo-500" />
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-sky-600" />
 
                 <div className="flex flex-col gap-3">
                   {/* Card Top Row: Avatar & Status */}
                   <div className="flex items-start justify-between gap-3 pt-1">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 text-white flex items-center justify-center font-extrabold text-sm shadow-md shadow-sky-500/20 shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-sky-600 text-white flex items-center justify-center font-extrabold text-sm shadow-md shadow-sky-600/20 shrink-0">
                         {(lead.name || 'L').substring(0, 2).toUpperCase()}
                       </div>
                       <div>
@@ -1180,11 +1168,10 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
                         <span className="text-[10px] font-sans font-bold text-emerald-600 uppercase">Paid:</span>
                         <span className="font-bold">₹{(Number(lead.paidAmount) || 0).toLocaleString('en-IN')}</span>
                       </div>
-                      <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border ${
-                        (Number(lead.balanceAmount) || 0) > 0
-                          ? 'text-amber-700 bg-amber-50/80 border-amber-200/60'
-                          : 'text-slate-600 bg-slate-100 border-slate-200'
-                      }`}>
+                      <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border ${(Number(lead.balanceAmount) || 0) > 0
+                        ? 'text-amber-700 bg-amber-50/80 border-amber-200/60'
+                        : 'text-slate-600 bg-slate-100 border-slate-200'
+                        }`}>
                         <span className="text-[10px] font-sans font-bold uppercase">Balance:</span>
                         <span className="font-bold">₹{(Number(lead.balanceAmount) || 0).toLocaleString('en-IN')}</span>
                       </div>
@@ -1194,10 +1181,10 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
                   {/* Contact Info Pills */}
                   <div className="flex flex-col gap-2 pt-2 border-t border-slate-100 text-xs">
                     {lead.phone && (
-                      <div className="flex items-center gap-2 text-slate-600 font-mono">
+                      <a href={`tel:${lead.phone}`} className="flex items-center gap-2 text-slate-600 font-bold">
                         <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span>{lead.phone}</span>
-                      </div>
+                      </a>
                     )}
                     {lead.email && (
                       <div className="flex items-center gap-2 text-slate-600 font-medium truncate">
@@ -1272,7 +1259,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
           <div className="bg-white w-full max-w-md h-full shadow-2xl flex flex-col justify-between animate-slide-left">
             <div className="bg-slate-900 text-white p-6 flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-400 to-indigo-500 text-white flex items-center justify-center font-black text-base shadow-lg shadow-sky-500/30">
+                <div className="w-12 h-12 rounded-2xl bg-sky-600 text-white flex items-center justify-center font-black text-base shadow-lg shadow-sky-600/30">
                   {(quickViewLead.name || 'L').substring(0, 2).toUpperCase()}
                 </div>
                 <div>
@@ -1311,7 +1298,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
               {/* Financial Breakdown Card */}
               <div className="flex flex-col gap-2">
                 <h4 className="font-bold text-slate-900 uppercase text-[10px] tracking-wider text-slate-400">Financial Breakdown</h4>
-                <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4 rounded-xl border border-slate-700 shadow-md flex flex-col gap-3">
+                <div className="bg-slate-900 text-white p-4 rounded-xl border border-slate-700 shadow-md flex flex-col gap-3">
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div className="bg-white/10 p-2 rounded-lg">
                       <span className="text-[9px] uppercase font-bold text-slate-300 block">Total</span>
@@ -1434,7 +1421,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[9999] flex items-center justify-center p-4 animate-fade-in">
           <form
             onSubmit={handleLeadFormSubmit}
-            className="bg-white rounded-2xl shadow-2xl border border-slate-200/80 w-full max-w-2xl overflow-hidden animate-slide-up flex flex-col max-h-[85vh]"
+            className="bg-white rounded-xl shadow-2xl border border-slate-200/80 w-full max-w-3xl overflow-hidden animate-slide-up flex flex-col max-h-[85vh]"
           >
             {/* Modal Header */}
             <div className="bg-slate-50 border-b border-slate-100 px-6 py-4.5 flex justify-between items-center">
@@ -1485,7 +1472,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
             </div>
 
             {/* Scrollable Form Content */}
-            <div className="overflow-y-auto p-6 flex-1 max-h-[50vh]">
+            <div className="overflow-y-auto p-6 flex-1 max-h-[60vh]">
               {/* Tab 1: General Info */}
               {activeFormTab === 'general' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
@@ -1575,11 +1562,10 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[10px] font-bold text-slate-500 tracking-wider uppercase pl-0.5">
-                      Email Address <span className="text-rose-500">*</span>
+                      Email Address
                     </label>
                     <input
                       type="email"
-                      required
                       value={formValues.email || ''}
                       onChange={(e) => setFormValues(prev => ({ ...prev, email: e.target.value }))}
                       placeholder="e.g. client@company.com"
@@ -1868,7 +1854,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2.5 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white font-bold text-xs uppercase rounded-xl shadow-md shadow-sky-500/20 transition-all cursor-pointer"
+                className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs uppercase rounded-xl shadow-md shadow-sky-600/20 transition-all cursor-pointer"
               >
                 {leadModal.type === 'add' ? 'Create Lead Profile' : 'Save Changes'}
               </button>
@@ -1944,7 +1930,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white font-bold text-xs uppercase rounded-xl shadow-md shadow-sky-500/20 transition-colors cursor-pointer"
+                className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs uppercase rounded-xl shadow-md shadow-sky-600/20 transition-colors cursor-pointer"
               >
                 {columnModal.mode === 'edit' ? 'Update Column' : 'Add Column'}
               </button>
