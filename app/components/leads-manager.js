@@ -40,6 +40,7 @@ import {
 const BASE_COLUMNS = [
   { key: 'leadDate', label: 'Lead Date', type: 'date' },
   { key: 'createdBy', label: 'Added By', type: 'text' },
+  { key: 'handledBy', label: 'Handled By', type: 'text' },
   { key: 'areaZone', label: 'Area Zone', type: 'text' },
   { key: 'businessName', label: 'Business Name', type: 'text' },
   { key: 'name', label: 'Client Name', type: 'text', required: true },
@@ -58,11 +59,11 @@ const BASE_COLUMNS = [
   { key: 'startCallDate', label: 'Start Call Date', type: 'date' },
   { key: 'lastCallDate', label: 'Last Call Date', type: 'date' },
   { key: 'remark2', label: 'Remark 2', type: 'text' },
-  { key: 'status', label: 'Status', type: 'select', options: ['New', 'Active', 'Contacted', 'Follow-up Required', 'No Answer'] },
+  { key: 'status', label: 'Status', type: 'select', options: ['Incoming', 'New', 'Active', 'Contacted', 'Follow-up Required', 'No Answer'] },
   { key: 'campaign', label: 'Source Campaign', type: 'text' }
 ];
 
-export default function LeadsManager({ leads = [], setLeads, user }) {
+export default function LeadsManager({ leads = [], setLeads, user, handleAcceptLead, initialFilter = 'all' }) {
   // View mode: 'table' vs 'grid'
   const [viewMode, setViewMode] = useState('grid');
 
@@ -71,6 +72,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
   const [isClient, setIsClient] = useState(false);
 
   // Search and filter states
+  const [quickFilterTab, setQuickFilterTab] = useState(initialFilter); // 'all', 'incoming', 'my-handled'
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [filters, setFilters] = useState({
@@ -78,6 +80,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
     campaign: 'All',
     paymentStatus: 'All',
     createdBy: 'All',
+    handledBy: 'All',
     dateFrom: '',
     dateTo: ''
   });
@@ -142,7 +145,9 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
   // Count leads by status
   const counts = {
     total: leads.length,
-    new: leads.filter(l => l.status === 'New' || !l.status).length,
+    incoming: leads.filter(l => !l.handledBy || l.status === 'Incoming').length,
+    myHandled: leads.filter(l => l.handledBy === user?.name || l.handledBy === user?.email).length,
+    new: leads.filter(l => l.status === 'New').length,
     active: leads.filter(l => l.status === 'Active').length,
     contacted: leads.filter(l => l.status === 'Contacted').length,
     followUp: leads.filter(l => l.status === 'Follow-up Required').length,
@@ -245,7 +250,10 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
     let styles = "bg-slate-100 text-slate-600 border-slate-200/80";
     let Icon = Sparkles;
 
-    if (status === 'Active') {
+    if (status === 'Incoming') {
+      styles = "bg-amber-50 text-amber-700 border-amber-200/80 ring-1 ring-amber-500/10 animate-pulse";
+      Icon = Sparkles;
+    } else if (status === 'Active') {
       styles = "bg-sky-50 text-sky-700 border-sky-200/70 ring-1 ring-sky-500/10";
       Icon = CheckCircle2;
     } else if (status === 'Contacted') {
@@ -265,7 +273,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
     return (
       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all ${styles}`}>
         <Icon className="w-3 h-3 shrink-0" />
-        <span>{status || 'New'}</span>
+        <span>{status || 'Incoming'}</span>
       </span>
     );
   };
@@ -333,6 +341,26 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
         </span>
       ) : (
         <span className="text-slate-400 font-normal italic text-[11px]">System / Unspecified</span>
+      );
+    }
+
+    if (col.key === 'handledBy') {
+      return val ? (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/70">
+          <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+          <span>{val}</span>
+        </span>
+      ) : (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (handleAcceptLead) handleAcceptLead(lead.id || lead._id);
+          }}
+          className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-xs rounded-lg shadow-xs transition-all cursor-pointer"
+        >
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          <span>Accept Lead</span>
+        </button>
       );
     }
 
@@ -542,6 +570,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
   const uniqueAreaZones = Array.from(new Set(leads.map(l => l.areaZone).filter(Boolean))).sort();
   const uniqueCampaigns = Array.from(new Set(leads.map(l => l.campaign).filter(Boolean))).sort();
   const uniqueCreators = Array.from(new Set(leads.map(l => l.createdBy).filter(Boolean))).sort();
+  const uniqueHandlers = Array.from(new Set(leads.map(l => l.handledBy).filter(Boolean))).sort();
 
   const activeFiltersCount =
     (statusFilter !== 'All' ? 1 : 0) +
@@ -549,6 +578,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
     (filters.campaign !== 'All' ? 1 : 0) +
     (filters.paymentStatus !== 'All' ? 1 : 0) +
     (filters.createdBy !== 'All' ? 1 : 0) +
+    (filters.handledBy !== 'All' ? 1 : 0) +
     (filters.dateFrom ? 1 : 0) +
     (filters.dateTo ? 1 : 0);
 
@@ -559,6 +589,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
       campaign: 'All',
       paymentStatus: 'All',
       createdBy: 'All',
+      handledBy: 'All',
       dateFrom: '',
       dateTo: ''
     });
@@ -566,6 +597,14 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
 
   // Filter and search logic
   let filteredLeads = leads.filter(lead => {
+    // Quick filter tab criteria
+    if (quickFilterTab === 'incoming' && lead.handledBy) {
+      return false;
+    }
+    if (quickFilterTab === 'my-handled' && (lead.handledBy !== user?.name && lead.handledBy !== user?.email)) {
+      return false;
+    }
+
     const query = searchQuery.toLowerCase();
     const nameMatch = lead.name?.toLowerCase().includes(query);
     const emailMatch = lead.email?.toLowerCase().includes(query);
@@ -574,12 +613,14 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
     const zoneMatch = lead.areaZone?.toLowerCase().includes(query);
     const campaignMatch = lead.campaign?.toLowerCase().includes(query);
     const createdByMatch = lead.createdBy?.toLowerCase().includes(query);
+    const handledByMatch = lead.handledBy?.toLowerCase().includes(query);
 
-    const matchesSearch = !query || nameMatch || emailMatch || phoneMatch || bizMatch || zoneMatch || campaignMatch || createdByMatch;
+    const matchesSearch = !query || nameMatch || emailMatch || phoneMatch || bizMatch || zoneMatch || campaignMatch || createdByMatch || handledByMatch;
     const matchesStatus = statusFilter === 'All' || lead.status === statusFilter;
     const matchesZone = filters.areaZone === 'All' || lead.areaZone === filters.areaZone;
     const matchesCampaign = filters.campaign === 'All' || lead.campaign === filters.campaign;
     const matchesCreator = filters.createdBy === 'All' || lead.createdBy === filters.createdBy;
+    const matchesHandler = filters.handledBy === 'All' || (filters.handledBy === 'Unassigned' ? !lead.handledBy : lead.handledBy === filters.handledBy);
 
     // Payment Status matching
     let matchesPayment = true;
@@ -602,7 +643,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
       matchesDate = matchesDate && (lead.leadDate || '') <= filters.dateTo;
     }
 
-    return matchesSearch && matchesStatus && matchesZone && matchesCampaign && matchesCreator && matchesPayment && matchesDate;
+    return matchesSearch && matchesStatus && matchesZone && matchesCampaign && matchesCreator && matchesHandler && matchesPayment && matchesDate;
   });
 
   // Apply sorting if configured
@@ -673,49 +714,60 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
         </div>
       </div>
 
-      {/* KPI Metric Summary Cards Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {[
-          { label: 'Total Leads', count: counts.total, status: 'All', color: 'slate', icon: Layers },
-          { label: 'New', count: counts.new, status: 'New', color: 'emerald', icon: Sparkles },
-          { label: 'Active', count: counts.active, status: 'Active', color: 'sky', icon: CheckCircle2 },
-          { label: 'Contacted', count: counts.contacted, status: 'Contacted', color: 'amber', icon: Clock },
-          { label: 'Follow-up', count: counts.followUp, status: 'Follow-up Required', color: 'purple', icon: AlertCircle },
-          { label: 'No Answer', count: counts.noAnswer, status: 'No Answer', color: 'rose', icon: XCircle }
-        ].map((card) => {
-          const isActive = statusFilter === card.status;
-          const IconComponent = card.icon;
+      {/* Quick Category Tab Switcher Bar */}
+      <div className="bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/80 flex items-center gap-2 shadow-2xs overflow-x-auto">
+        <button
+          onClick={() => setQuickFilterTab('all')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+            quickFilterTab === 'all'
+              ? 'bg-white text-sky-700 shadow-sm ring-1 ring-slate-200/80'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+          }`}
+        >
+          <Layers className="w-4 h-4 text-sky-600" />
+          <span>All Leads Directory</span>
+          <span className="bg-slate-100 text-slate-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+            {counts.total}
+          </span>
+        </button>
 
-          return (
-            <button
-              key={card.label}
-              onClick={() => setStatusFilter(card.status)}
-              className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${isActive
-                ? 'bg-white border-sky-500 shadow-md ring-2 ring-sky-500/10'
-                : 'bg-white border-slate-200/80 hover:border-slate-300 hover:shadow-xs'
-                }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{card.label}</span>
-                <div className={`p-1.5 rounded-lg ${isActive ? 'bg-sky-50 text-sky-600' : 'bg-slate-50 text-slate-400'}`}>
-                  <IconComponent className="w-3.5 h-3.5" />
-                </div>
-              </div>
-              <div className="mt-2 flex items-baseline justify-between">
-                <span className="text-xl font-black text-slate-900">{card.count}</span>
-                {isActive && (
-                  <span className="text-[9px] font-bold text-sky-600 bg-sky-50 px-1.5 py-0.5 rounded">Active Filter</span>
-                )}
-              </div>
-            </button>
-          );
-        })}
+        <button
+          onClick={() => setQuickFilterTab('incoming')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+            quickFilterTab === 'incoming'
+              ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20'
+              : 'text-amber-800 bg-amber-50/80 hover:bg-amber-100 border border-amber-200/80'
+          }`}
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>Incoming Leads (Unassigned)</span>
+          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+            quickFilterTab === 'incoming' ? 'bg-amber-600 text-white' : 'bg-amber-200/80 text-amber-900'
+          }`}>
+            {counts.incoming}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setQuickFilterTab('my-handled')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+            quickFilterTab === 'my-handled'
+              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+          }`}
+        >
+          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+          <span>My Handled Leads</span>
+          <span className="bg-slate-100 text-slate-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+            {counts.myHandled}
+          </span>
+        </button>
       </div>
 
       {/* Filter, Search & View Controls Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-200/80 p-4 rounded-2xl shadow-sm">
         {/* Left Search Bar */}
-        <div className="relative flex-1 min-w-[240px]">
+        <div className="relative flex-1 min-w-[220px]">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 transform -translate-y-1/2" />
           <input
             type="text"
@@ -732,6 +784,39 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
               <X className="w-3.5 h-3.5" />
             </button>
           )}
+        </div>
+
+        {/* Status Filter Quick Pills (Right after Search) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 max-w-full">
+          {[
+            { label: 'All', count: counts.all, status: 'all' },
+            { label: 'New', count: counts.new, status: 'New', icon: Sparkles },
+            { label: 'Active', count: counts.active, status: 'Active', icon: CheckCircle2 },
+            { label: 'Contacted', count: counts.contacted, status: 'Contacted', icon: Clock },
+            { label: 'Follow-up', count: counts.followUp, status: 'Follow-up Required', icon: AlertCircle },
+          ].map((pill) => {
+            const isActive = statusFilter === pill.status;
+            return (
+              <button
+                key={pill.label}
+                onClick={() => setStatusFilter(pill.status)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                  isActive
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-slate-100/90 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
+                }`}
+              >
+                <span>{pill.label}</span>
+                <span
+                  className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded-full ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                  }`}
+                >
+                  {pill.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Right Controls */}
@@ -934,7 +1019,23 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
               </select>
             </div>
 
-            {/* 5. Date From */}
+            {/* 5. Handled By Filter */}
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Handled By</label>
+              <select
+                value={filters.handledBy}
+                onChange={(e) => setFilters(prev => ({ ...prev, handledBy: e.target.value }))}
+                className="h-9 px-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none focus:border-sky-500 cursor-pointer"
+              >
+                <option value="All">All Handlers</option>
+                <option value="Unassigned">Unassigned (Incoming)</option>
+                {uniqueHandlers.map(h => (
+                  <option key={h} value={h}>{h}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* 6. Date From */}
             <div className="flex flex-col gap-1">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Lead Date From</label>
               <input
@@ -945,7 +1046,7 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
               />
             </div>
 
-            {/* 6. Date To */}
+            {/* 7. Date To */}
             <div className="flex flex-col gap-1">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Lead Date To</label>
               <input
@@ -979,6 +1080,12 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
               Campaign: {filters.campaign}
               <button onClick={() => setFilters(prev => ({ ...prev, campaign: 'All' }))} className="hover:text-indigo-900 cursor-pointer"><X className="w-3 h-3" /></button>
+            </span>
+          )}
+          {filters.handledBy !== 'All' && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-teal-50 text-teal-700 border border-teal-200">
+              Handled By: {filters.handledBy}
+              <button onClick={() => setFilters(prev => ({ ...prev, handledBy: 'All' }))} className="hover:text-teal-900 cursor-pointer"><X className="w-3 h-3" /></button>
             </span>
           )}
           {filters.paymentStatus !== 'All' && (
@@ -1160,6 +1267,31 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
                     </div>
                     {renderStatusBadge(lead.status)}
                   </div>
+
+                  {/* Lead Handler Status / Accept Lead Bar */}
+                  {lead.handledBy ? (
+                    <div className="flex items-center justify-between bg-emerald-50/80 border border-emerald-200/70 p-2 rounded-xl text-xs">
+                      <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Handled By:</span>
+                      <span className="font-extrabold text-emerald-800 flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        {lead.handledBy}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between bg-amber-50/80 border border-amber-200/80 p-2 rounded-xl text-xs">
+                      <div className="flex items-center gap-1 text-amber-800 font-bold">
+                        <Sparkles className="w-3 h-3 text-amber-600 animate-pulse" />
+                        <span>Incoming</span>
+                      </div>
+                      <button
+                        onClick={() => handleAcceptLead && handleAcceptLead(lead.id || lead._id)}
+                        className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-[11px] rounded-lg shadow-xs cursor-pointer transition-all flex items-center gap-1"
+                      >
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Accept Lead</span>
+                      </button>
+                    </div>
+                  )}
 
                   {/* Financial Summary Pill Bar inside Lead Card */}
                   {(lead.paidAmount !== undefined || lead.balanceAmount !== undefined || lead.totalAmount !== undefined) && (
@@ -1354,12 +1486,26 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
                     <span className="text-[10px] text-slate-400 font-bold uppercase block">Lead Date</span>
                     <span className="font-semibold text-slate-800 text-xs">{quickViewLead.leadDate || '-'}</span>
                   </div>
-                  <div className="sm:col-span-2 border-t border-slate-100 pt-2.5">
+                  <div className="border-t border-slate-100 pt-2.5">
                     <span className="text-[10px] text-slate-400 font-bold uppercase block">Added By User</span>
                     <span className="font-semibold text-slate-800 text-xs flex items-center gap-1.5 mt-0.5">
                       <User className="w-3.5 h-3.5 text-sky-500" />
                       <span>{quickViewLead.createdBy || 'System / Unspecified'}</span>
                     </span>
+                  </div>
+                  <div className="border-t border-slate-100 pt-2.5">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Handled By Agent</span>
+                    {quickViewLead.handledBy ? (
+                      <span className="font-extrabold text-emerald-700 text-xs flex items-center gap-1.5 mt-0.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>{quickViewLead.handledBy}</span>
+                      </span>
+                    ) : (
+                      <span className="font-extrabold text-amber-600 text-xs flex items-center gap-1.5 mt-0.5">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                        <span>Unassigned / Incoming</span>
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1399,7 +1545,23 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
               </div>
             </div>
 
-            <div className="bg-slate-50 border-t border-slate-100 p-4 flex items-center justify-end gap-3">
+            <div className="bg-slate-50 border-t border-slate-100 p-4 flex items-center justify-between gap-3">
+              {!quickViewLead.handledBy ? (
+                <button
+                  onClick={() => {
+                    if (handleAcceptLead) handleAcceptLead(quickViewLead.id || quickViewLead._id);
+                    setQuickViewLead(prev => ({ ...prev, handledBy: user?.name || user?.email || 'Current User', status: 'Active' }));
+                  }}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Accept Lead Now</span>
+                </button>
+              ) : (
+                <div className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+                  Assigned to {quickViewLead.handledBy}
+                </div>
+              )}
               <button
                 onClick={() => {
                   setQuickViewLead(null);
@@ -1539,6 +1701,18 @@ export default function LeadsManager({ leads = [], setLeads, user }) {
                       disabled
                       value={formValues.createdBy || (leadModal.type === 'add' ? (user?.name || user?.email || 'Current User') : 'System / Unspecified')}
                       className="w-full h-10 rounded-xl border border-slate-200/80 px-3.5 text-xs font-semibold text-slate-500 bg-slate-100/90 cursor-not-allowed outline-none select-none"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 tracking-wider uppercase pl-0.5">
+                      Handled By Agent
+                    </label>
+                    <input
+                      type="text"
+                      value={formValues.handledBy || ''}
+                      onChange={(e) => setFormValues(prev => ({ ...prev, handledBy: e.target.value }))}
+                      placeholder="Leave blank for Incoming / Unassigned"
+                      className="w-full h-10 rounded-xl border border-slate-200 px-3.5 text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10 outline-none transition-all bg-white"
                     />
                   </div>
                 </div>

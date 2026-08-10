@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Sidebar = ({ activeTab, setActiveTab, user, onLogout, isCollapsed }) => {
+const Sidebar = ({ activeTab, setActiveTab, user, onLogout, isCollapsed, incomingCount = 0 }) => {
   const companyItems = [
     {
       id: 'dashboard',
@@ -8,6 +8,16 @@ const Sidebar = ({ activeTab, setActiveTab, user, onLogout, isCollapsed }) => {
       icon: (
         <svg className="w-4.5 h-4.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+      )
+    },
+    {
+      id: 'incoming-leads',
+      label: 'Incoming Leads',
+      badge: incomingCount,
+      icon: (
+        <svg className="w-4.5 h-4.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
         </svg>
       )
     },
@@ -89,16 +99,28 @@ const Sidebar = ({ activeTab, setActiveTab, user, onLogout, isCollapsed }) => {
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
                     }`}
                 >
-                  <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
+                  <div className={`flex items-center ${isCollapsed ? 'justify-center relative' : 'gap-3'}`}>
                     <span className={`transition-colors ${isActive ? 'text-[#2d8cf0]' : 'text-slate-400 group-hover:text-slate-600'}`}>
                       {item.icon}
                     </span>
                     {!isCollapsed && <span>{item.label}</span>}
+                    {isCollapsed && item.badge > 0 && (
+                      <span className="absolute -top-1 -right-1.5 bg-amber-500 text-white text-[9px] font-black rounded-full h-4 w-4 flex items-center justify-center border border-white">
+                        {item.badge}
+                      </span>
+                    )}
                   </div>
                   {!isCollapsed && (
-                    <span className={`text-[10px] transition-transform ${isActive ? 'text-[#2d8cf0]' : 'text-slate-300 group-hover:text-slate-400'}`}>
-                      ▶
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {item.badge > 0 && (
+                        <span className="bg-amber-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full shadow-xs">
+                          {item.badge}
+                        </span>
+                      )}
+                      <span className={`text-[10px] transition-transform ${isActive ? 'text-[#2d8cf0]' : 'text-slate-300 group-hover:text-slate-400'}`}>
+                        ▶
+                      </span>
+                    </div>
                   )}
                 </button>
               );

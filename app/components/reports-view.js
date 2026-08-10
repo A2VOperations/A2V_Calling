@@ -9,21 +9,13 @@ import {
   Clock,
   Sparkles,
   Search,
-  Filter,
   TrendingUp,
-  BarChart2,
   Download,
-  ChevronLeft,
-  ChevronRight,
   Plus,
-  PhoneCall,
   Activity,
   Award,
-  FileText,
-  CheckCheck,
   X,
   Flame,
-  Zap,
   AlertCircle,
   ArrowUpRight,
   Eye,
@@ -51,9 +43,10 @@ export default function ReportsView({ user: currentUser }) {
     return `${year}-${month}`;
   });
 
-  const [activeTab, setActiveTab] = useState('dayReport'); // 'dayReport' | 'userLeaderboard' | 'activityLog'
+  const [activeTab, setActiveTab] = useState('leadHandlingReport'); // 'leadHandlingReport' | 'dayReport' | 'userLeaderboard'
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDayDetail, setSelectedDayDetail] = useState(null); // YYYY-MM-DD for modal
+  const [selectedUserHandledDetail, setSelectedUserHandledDetail] = useState(null); // User object for lead handling modal
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -110,29 +103,58 @@ export default function ReportsView({ user: currentUser }) {
     return `${year}-${month}-${day}`;
   };
 
-  // User list including current user if not present
+  // User list including current user if not present (Deduplicated by Name and Email)
   const allUserOptions = useMemo(() => {
-    const map = new Map();
+    const result = [];
+    const seen = new Set();
+
     users.forEach(u => {
-      if (u.name || u.email) map.set(u.email || u.name, u);
+      if (!u) return;
+      const nKey = u.name ? u.name.trim().toLowerCase() : '';
+      const eKey = u.email ? u.email.trim().toLowerCase() : '';
+
+      const primaryKey = eKey || nKey;
+      if (!primaryKey) return;
+      if (seen.has(primaryKey) || (nKey && seen.has(nKey)) || (eKey && seen.has(eKey))) return;
+
+      if (eKey) seen.add(eKey);
+      if (nKey) seen.add(nKey);
+      result.push(u);
     });
-    // Add creators found in leads/followups
-    leads.forEach(l => {
-      if (l.createdBy && !map.has(l.createdBy)) {
-        map.set(l.createdBy, { _id: l.createdBy, name: l.createdBy, email: l.createdBy, role: 'user' });
+
+    const checkAndAdd = (str) => {
+      if (!str || typeof str !== 'string') return;
+      const key = str.trim().toLowerCase();
+      if (!key || key === 'system' || key === 'unspecified' || key === 'admin') return;
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push({ _id: str, name: str, email: str, role: 'user' });
       }
+    };
+
+    leads.forEach(l => {
+      checkAndAdd(l.createdBy);
+      checkAndAdd(l.handledBy);
     });
     followUps.forEach(f => {
-      if (f.createdBy && !map.has(f.createdBy)) {
-        map.set(f.createdBy, { _id: f.createdBy, name: f.createdBy, email: f.createdBy, role: 'user' });
-      }
+      checkAndAdd(f.createdBy);
     });
-    return Array.from(map.values());
+
+    return result;
   }, [users, leads, followUps]);
+
+  // Helper matcher to check if a lead/followup user field matches a user object by name OR email
+  const isUserMatch = (val, usr) => {
+    if (!val || !usr) return false;
+    const v = val.trim().toLowerCase();
+    const n = usr.name ? usr.name.trim().toLowerCase() : '';
+    const e = usr.email ? usr.email.trim().toLowerCase() : '';
+    return (n && v === n) || (e && v === e);
+  };
 
   // Filtered Leads & FollowUps based on user & month
   const filteredData = useMemo(() => {
-    const isUserMatch = (itemUser) => {
+    const isSelectedUserMatch = (itemUser) => {
       if (selectedUser === 'all') return true;
       if (!itemUser) return selectedUser === 'Unassigned' || selectedUser === 'Admin';
       return itemUser.toLowerCase() === selectedUser.toLowerCase();
@@ -142,14 +164,14 @@ export default function ReportsView({ user: currentUser }) {
     const filteredLeads = leads.filter(l => {
       const dateStr = formatYYYYMMDD(l.createdAt || l.leadDate);
       const isMonthMatch = dateStr.startsWith(selectedMonth);
-      return isUserMatch(l.createdBy) && isMonthMatch;
+      return isSelectedUserMatch(l.createdBy) && isMonthMatch;
     });
 
     // Filter followups
     const filteredFollowUps = followUps.filter(f => {
       const dateStr = formatYYYYMMDD(f.updatedAt || f.createdAt || f.scheduledAt);
       const isMonthMatch = dateStr.startsWith(selectedMonth);
-      return isUserMatch(f.createdBy) && isMonthMatch;
+      return isSelectedUserMatch(f.createdBy) && isMonthMatch;
     });
 
     return { filteredLeads, filteredFollowUps };
@@ -173,16 +195,16 @@ export default function ReportsView({ user: currentUser }) {
 
       // Leads added on this day
       const dayLeads = leads.filter(l => {
-        const isUserMatch = selectedUser === 'all' || (l.createdBy && l.createdBy.toLowerCase() === selectedUser.toLowerCase());
+        const isMatch = selectedUser === 'all' || (l.createdBy && l.createdBy.toLowerCase() === selectedUser.toLowerCase());
         const leadDateStr = formatYYYYMMDD(l.createdAt || l.leadDate);
-        return isUserMatch && leadDateStr === fullDateStr;
+        return isMatch && leadDateStr === fullDateStr;
       });
 
       // Follow-ups on this day (scheduled or completed)
       const dayFollowUps = followUps.filter(f => {
-        const isUserMatch = selectedUser === 'all' || (f.createdBy && f.createdBy.toLowerCase() === selectedUser.toLowerCase());
+        const isMatch = selectedUser === 'all' || (f.createdBy && f.createdBy.toLowerCase() === selectedUser.toLowerCase());
         const fuDateStr = formatYYYYMMDD(f.updatedAt || f.createdAt || f.scheduledAt);
-        return isUserMatch && fuDateStr === fullDateStr;
+        return isMatch && fuDateStr === fullDateStr;
       });
 
       const dayCompletedFollowUps = dayFollowUps.filter(f => f.status === 'Completed');
@@ -235,34 +257,32 @@ export default function ReportsView({ user: currentUser }) {
   // User Activeness Leaderboard Calculation
   const userActivenessList = useMemo(() => {
     return allUserOptions.map(usr => {
-      const uName = usr.name || usr.email;
-
       // Leads added by user in selected month
       const monthLeads = leads.filter(l => {
         const dateStr = formatYYYYMMDD(l.createdAt || l.leadDate);
-        return l.createdBy?.toLowerCase() === uName.toLowerCase() && dateStr.startsWith(selectedMonth);
+        return isUserMatch(l.createdBy, usr) && dateStr.startsWith(selectedMonth);
       });
 
       // All-time leads added by user
-      const totalLeads = leads.filter(l => l.createdBy?.toLowerCase() === uName.toLowerCase());
+      const totalLeads = leads.filter(l => isUserMatch(l.createdBy, usr));
 
       // Followups by user in selected month
       const monthFollowUps = followUps.filter(f => {
         const dateStr = formatYYYYMMDD(f.updatedAt || f.createdAt || f.scheduledAt);
-        return f.createdBy?.toLowerCase() === uName.toLowerCase() && dateStr.startsWith(selectedMonth);
+        return isUserMatch(f.createdBy, usr) && dateStr.startsWith(selectedMonth);
       });
 
       const monthCompletedFollowUps = monthFollowUps.filter(f => f.status === 'Completed');
 
       // All time completed followups
-      const totalCompletedFollowUps = followUps.filter(f => f.createdBy?.toLowerCase() === uName.toLowerCase() && f.status === 'Completed');
+      const totalCompletedFollowUps = followUps.filter(f => isUserMatch(f.createdBy, usr) && f.status === 'Completed');
 
       const monthTotalActivities = monthLeads.length + monthCompletedFollowUps.length;
 
       // Active days count for user
       const userActiveDays = monthlyDays.filter(d => {
-        const dayUserLeads = d.leadsList.filter(l => l.createdBy?.toLowerCase() === uName.toLowerCase());
-        const dayUserFUs = d.followUpsList.filter(f => f.createdBy?.toLowerCase() === uName.toLowerCase());
+        const dayUserLeads = d.leadsList.filter(l => isUserMatch(l.createdBy, usr));
+        const dayUserFUs = d.followUpsList.filter(f => isUserMatch(f.createdBy, usr));
         return (dayUserLeads.length + dayUserFUs.length) > 0;
       }).length;
 
@@ -297,6 +317,55 @@ export default function ReportsView({ user: currentUser }) {
       return item.name.toLowerCase().includes(q) || item.email.toLowerCase().includes(q) || item.role.toLowerCase().includes(q);
     }).sort((a, b) => b.monthTotalActivities - a.monthTotalActivities);
   }, [allUserOptions, leads, followUps, selectedMonth, monthlyDays, searchQuery]);
+
+  // Lead Handling Report calculation per user
+  const leadHandlingList = useMemo(() => {
+    const totalHandledSystemCount = leads.filter(l => l.handledBy).length || 1;
+
+    return allUserOptions.map(usr => {
+      // Month handled leads (acceptedAt or createdAt in selectedMonth)
+      const monthHandledLeads = leads.filter(l => {
+        if (!l.handledBy) return false;
+        const matchesUser = isUserMatch(l.handledBy, usr);
+        const dateStr = formatYYYYMMDD(l.acceptedAt || l.createdAt || l.leadDate);
+        return matchesUser && dateStr.startsWith(selectedMonth);
+      });
+
+      // Total all-time handled leads
+      const totalHandledLeads = leads.filter(l => {
+        if (!l.handledBy) return false;
+        return isUserMatch(l.handledBy, usr);
+      });
+
+      // Active handled leads
+      const activeHandledLeads = totalHandledLeads.filter(l => l.status === 'Active');
+
+      // Financials handled
+      const handledPaidSum = totalHandledLeads.reduce((sum, l) => sum + (Number(l.paidAmount) || 0), 0);
+      const handledTotalSum = totalHandledLeads.reduce((sum, l) => sum + (Number(l.totalAmount) || (Number(l.paidAmount) || 0) + (Number(l.balanceAmount) || 0)), 0);
+
+      // Handling Share Pct
+      const handlingSharePct = Math.round((totalHandledLeads.length / totalHandledSystemCount) * 100);
+
+      return {
+        user: usr,
+        name: usr.name || 'User',
+        email: usr.email || '',
+        role: usr.role || 'user',
+        monthHandledCount: monthHandledLeads.length,
+        totalHandledCount: totalHandledLeads.length,
+        activeHandledCount: activeHandledLeads.length,
+        handledPaidSum,
+        handledTotalSum,
+        handlingSharePct,
+        handledLeadsList: totalHandledLeads
+      };
+    }).filter(item => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return item.name.toLowerCase().includes(q) || item.email.toLowerCase().includes(q) || item.role.toLowerCase().includes(q);
+    }).sort((a, b) => b.totalHandledCount - a.totalHandledCount);
+  }, [allUserOptions, leads, selectedMonth, searchQuery]);
 
   // Export to CSV function
   const exportReportCSV = () => {
@@ -488,6 +557,20 @@ export default function ReportsView({ user: currentUser }) {
       {/* Main Navigation Tabs */}
       <div className="flex items-center border-b border-slate-200 gap-6">
         <button
+          onClick={() => setActiveTab('leadHandlingReport')}
+          className={`pb-3 text-xs font-bold transition-all relative flex items-center gap-2 cursor-pointer ${activeTab === 'leadHandlingReport'
+              ? 'text-sky-600 border-b-2 border-sky-600'
+              : 'text-slate-500 hover:text-slate-800'
+            }`}
+        >
+          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+          <span>Lead Handling & Assignment Report</span>
+          <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">
+            {leads.filter(l => l.handledBy).length} Handled
+          </span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('dayReport')}
           className={`pb-3 text-xs font-bold transition-all relative flex items-center gap-2 cursor-pointer ${activeTab === 'dayReport'
               ? 'text-sky-600 border-b-2 border-sky-600'
@@ -512,6 +595,112 @@ export default function ReportsView({ user: currentUser }) {
           </button>
         )}
       </div>
+
+      {/* TAB 0: LEAD HANDLING & ASSIGNMENT REPORT */}
+      {activeTab === 'leadHandlingReport' && (
+        <div className="flex flex-col gap-6">
+          {/* User Lead Handling Breakdown Table */}
+          <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
+            <div className="p-5 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">User Lead Handling Performance Table</h3>
+                <p className="text-xs text-slate-400 font-medium mt-0.5">
+                  Detailed breakdown of leads accepted, active pipelines, and revenue per team member
+                </p>
+              </div>
+              <div className="relative min-w-[220px]">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search user..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full h-8 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 outline-none focus:border-sky-500"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-200/80 uppercase tracking-wider text-[10px]">
+                    <th className="py-3.5 px-5">Team Member</th>
+                    <th className="py-3.5 px-4">Leads Accepted ({selectedMonth})</th>
+                    <th className="py-3.5 px-4">Total Handled (All-Time)</th>
+                    <th className="py-3.5 px-4">Active Handled Leads</th>
+                    <th className="py-3.5 px-4">Handled Paid Revenue</th>
+                    <th className="py-3.5 px-4">Handling Share %</th>
+                    <th className="py-3.5 px-5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                  {leadHandlingList.length > 0 ? (
+                    leadHandlingList.map((item, idx) => (
+                      <tr key={item.email || idx} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="py-4 px-5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                              {item.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                                <span>{item.name}</span>
+                                {idx === 0 && item.totalHandledCount > 0 && (
+                                  <span className="px-1.5 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-bold rounded-md flex items-center gap-0.5">
+                                    <Award className="w-3 h-3 text-amber-600" /> Top Handler
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-slate-400 font-normal">{item.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="font-extrabold text-amber-700 text-sm">{item.monthHandledCount}</span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="font-extrabold text-slate-900 text-sm">{item.totalHandledCount}</span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="px-2.5 py-1 bg-sky-50 text-sky-700 border border-sky-200/70 rounded-full text-xs font-bold">
+                            {item.activeHandledCount} Active
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 font-mono font-bold text-emerald-700 text-xs">
+                          ₹{item.handledPaidSum.toLocaleString('en-IN')}
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 bg-slate-100 h-2 rounded-full overflow-hidden">
+                              <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${Math.max(5, item.handlingSharePct)}%` }} />
+                            </div>
+                            <span className="text-[11px] font-bold text-slate-600">{item.handlingSharePct}%</span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-5 text-right">
+                          <button
+                            onClick={() => setSelectedUserHandledDetail(item)}
+                            className="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 border border-emerald-200/60 shadow-2xs"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>View Handled Leads ({item.handledLeadsList.length})</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-slate-400 font-medium">
+                        No lead handling records found for team members.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* TAB 1: ACTIVITIES IN A DAY REPORT OF MONTH */}
       {activeTab === 'dayReport' && (
@@ -684,11 +873,11 @@ export default function ReportsView({ user: currentUser }) {
         <div className="flex flex-col gap-6">
           {/* Filter Bar */}
           <div className="bg-white border border-slate-200/80 p-4 rounded-2xl shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="relative w-full sm:w-72">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search user name or role..."
+                placeholder="Search user name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
@@ -706,7 +895,6 @@ export default function ReportsView({ user: currentUser }) {
                 <thead>
                   <tr className="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-200/80 uppercase tracking-wider text-[10px]">
                     <th className="py-3.5 px-5">User</th>
-                    <th className="py-3.5 px-4">Role</th>
                     <th className="py-3.5 px-4">Leads Added (Month)</th>
                     <th className="py-3.5 px-4">Follow-ups Done</th>
                     <th className="py-3.5 px-4">Total Activities</th>
@@ -736,11 +924,6 @@ export default function ReportsView({ user: currentUser }) {
                               <div className="text-[11px] text-slate-400 font-normal">{item.email}</div>
                             </div>
                           </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg text-[11px] font-bold uppercase tracking-wider">
-                            {item.role}
-                          </span>
                         </td>
                         <td className="py-4 px-4">
                           <div className="flex flex-col">
@@ -783,7 +966,7 @@ export default function ReportsView({ user: currentUser }) {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={8} className="py-8 text-center text-slate-400 font-medium">
+                      <td colSpan={7} className="py-8 text-center text-slate-400 font-medium">
                         No team member activeness records found matching your query.
                       </td>
                     </tr>
@@ -955,9 +1138,94 @@ export default function ReportsView({ user: currentUser }) {
               <span className="text-xs font-semibold text-slate-500">
                 Detailed Activity Report • {selectedDayObj.dateStr}
               </span>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+      {/* FULL-SCREEN USER HANDLED LEADS DETAIL MODAL */}
+      {selectedUserHandledDetail && isClient && createPortal(
+        <div className="fixed inset-0 z-99999 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 md:p-6 animate-fade-in font-sans">
+          <div className="bg-white w-full max-w-4xl h-full md:h-[85vh] md:rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
+            {/* Modal Header */}
+            <div className="bg-slate-900 text-white px-6 py-4.5 flex items-center justify-between shadow-2xs shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-600 text-white font-black text-sm flex items-center justify-center shadow-md">
+                  {selectedUserHandledDetail.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <span>Leads Handled by {selectedUserHandledDetail.name}</span>
+                    <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold rounded-md uppercase border border-emerald-500/30">
+                      {selectedUserHandledDetail.role}
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-300 font-medium mt-0.5">
+                    Total {selectedUserHandledDetail.handledLeadsList.length} leads accepted and handled by this user
+                  </p>
+                </div>
+              </div>
+
               <button
-                onClick={() => setSelectedDayDetail(null)}
-                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+                onClick={() => setSelectedUserHandledDetail(null)}
+                className="text-slate-400 hover:text-white p-1 cursor-pointer transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4 bg-slate-50/50">
+              {selectedUserHandledDetail.handledLeadsList.length > 0 ? (
+                <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-2xs">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider text-[10px]">
+                        <th className="py-3 px-4">Lead Name</th>
+                        <th className="py-3 px-4">Contact Info</th>
+                        <th className="py-3 px-4">Area Zone</th>
+                        <th className="py-3 px-4">Status</th>
+                        <th className="py-3 px-4 text-right">Financials (Paid / Total)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                      {selectedUserHandledDetail.handledLeadsList.map((lead) => (
+                        <tr key={lead.id || lead._id} className="hover:bg-slate-50 transition-colors">
+                          <td className="py-3.5 px-4 font-bold text-slate-900">
+                            {lead.name}
+                            {lead.businessName && <div className="text-[10px] text-slate-400 font-normal">{lead.businessName}</div>}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <div>{lead.phone || '-'}</div>
+                            <div className="text-[10px] text-slate-400 truncate max-w-40">{lead.email}</div>
+                          </td>
+                          <td className="py-3.5 px-4">{lead.areaZone || 'General'}</td>
+                          <td className="py-3.5 px-4">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-sky-50 text-sky-700 border border-sky-200">
+                              {lead.status || 'Active'}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-right font-mono">
+                            <div className="text-emerald-700 font-bold">₹{(Number(lead.paidAmount) || 0).toLocaleString('en-IN')}</div>
+                            <div className="text-[10px] text-slate-400">Total: ₹{(Number(lead.totalAmount) || 0).toLocaleString('en-IN')}</div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="py-12 text-center text-xs text-slate-400 font-medium italic bg-white rounded-xl border border-dashed border-slate-200">
+                  No handled leads recorded for this user yet.
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-white px-6 py-3.5 border-t border-slate-200 flex items-center justify-end shrink-0">
+              <button
+                onClick={() => setSelectedUserHandledDetail(null)}
+                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold cursor-pointer transition-all"
               >
                 Close Report
               </button>
