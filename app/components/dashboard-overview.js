@@ -813,7 +813,7 @@ export default function DashboardOverview({
 
       {/* Incoming Leads (Action Required) Section */}
       {incomingLeads.length > 0 && (
-        <div className="bg-gradient-to-r from-amber-500/10 via-amber-50/50 to-orange-50/60 border border-amber-200/90 rounded-2xl p-6 shadow-sm">
+        <div className="bg-linear-to-r from-amber-500/10 via-amber-50/50 to-orange-50/60 border border-amber-200/90 rounded-2xl p-6 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-amber-500 text-white rounded-xl shadow-md shadow-amber-500/20 shrink-0">

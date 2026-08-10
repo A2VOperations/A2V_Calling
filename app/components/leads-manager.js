@@ -284,7 +284,7 @@ export default function LeadsManager({ leads = [], setLeads, user, handleAcceptL
 
     if (col.key === 'name') {
       return (
-        <div className="flex items-center gap-3 min-w-[170px]">
+        <div className="flex items-center gap-3 min-w-42.5">
           <div className="w-8 h-8 rounded-full bg-sky-600 text-white flex items-center justify-center font-extrabold text-xs shadow-xs shrink-0">
             {(val || 'L').substring(0, 2).toUpperCase()}
           </div>
@@ -405,7 +405,7 @@ export default function LeadsManager({ leads = [], setLeads, user, handleAcceptL
     }
 
     return val !== undefined && val !== '' ? (
-      <span className="text-slate-700 font-medium text-xs block max-w-[220px] truncate" title={val.toString()}>
+      <span className="text-slate-700 font-medium text-xs block max-w-55 truncate" title={val.toString()}>
         {val.toString()}
       </span>
     ) : (
@@ -767,7 +767,7 @@ export default function LeadsManager({ leads = [], setLeads, user, handleAcceptL
       {/* Filter, Search & View Controls Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-200/80 p-4 rounded-2xl shadow-sm">
         {/* Left Search Bar */}
-        <div className="relative flex-1 min-w-[220px]">
+        <div className="relative flex-1 min-w-55">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 transform -translate-y-1/2" />
           <input
             type="text"
@@ -1132,7 +1132,7 @@ export default function LeadsManager({ leads = [], setLeads, user, handleAcceptL
                     S.No
                   </th>
                   {visibleColumns.map((col) => (
-                    <th key={col.key} className="p-4 border-r border-slate-200/50 whitespace-nowrap min-w-[140px]">
+                    <th key={col.key} className="p-4 border-r border-slate-200/50 whitespace-nowrap min-w-35">
                       <div className="flex items-center justify-between gap-1 group">
                         <button
                           onClick={() => handleSort(col.key)}
@@ -1181,7 +1181,7 @@ export default function LeadsManager({ leads = [], setLeads, user, handleAcceptL
                         {idx + 1}
                       </td>
                       {visibleColumns.map((col) => (
-                        <td key={col.key} className="p-4 border-r border-slate-200/50 max-w-[260px]">
+                        <td key={col.key} className="p-4 border-r border-slate-200/50 max-w-65">
                           {renderCellContent(col, lead)}
                         </td>
                       ))}
@@ -1387,7 +1387,7 @@ export default function LeadsManager({ leads = [], setLeads, user, handleAcceptL
 
       {/* Quick View Drawer Modal */}
       {quickViewLead && isClient && createPortal(
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[9999] flex justify-end animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-9999 flex justify-end animate-fade-in">
           <div className="bg-white w-full max-w-md h-full shadow-2xl flex flex-col justify-between animate-slide-left">
             <div className="bg-slate-900 text-white p-6 flex items-start justify-between">
               <div className="flex items-center gap-3">
@@ -1429,7 +1429,7 @@ export default function LeadsManager({ leads = [], setLeads, user, handleAcceptL
 
               {/* Financial Breakdown Card */}
               <div className="flex flex-col gap-2">
-                <h4 className="font-bold text-slate-900 uppercase text-[10px] tracking-wider text-slate-400">Financial Breakdown</h4>
+                <h4 className="font-bold uppercase text-[10px] tracking-wider text-slate-400">Financial Breakdown</h4>
                 <div className="bg-slate-900 text-white p-4 rounded-xl border border-slate-700 shadow-md flex flex-col gap-3">
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div className="bg-white/10 p-2 rounded-lg">
@@ -1468,7 +1468,7 @@ export default function LeadsManager({ leads = [], setLeads, user, handleAcceptL
 
               {/* Main Contact Section */}
               <div className="flex flex-col gap-2">
-                <h4 className="font-bold text-slate-900 uppercase text-[10px] tracking-wider text-slate-400">Contact Details</h4>
+                <h4 className="font-bold uppercase text-[10px] tracking-wider text-slate-400">Contact Details</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
                   <div>
                     <span className="text-[10px] text-slate-400 font-bold uppercase block">Phone Number</span>
@@ -1513,7 +1513,7 @@ export default function LeadsManager({ leads = [], setLeads, user, handleAcceptL
               {/* Remarks & Notes */}
               {(quickViewLead.remark || quickViewLead.remark2) && (
                 <div className="flex flex-col gap-2">
-                  <h4 className="font-bold text-slate-900 uppercase text-[10px] tracking-wider text-slate-400">Call Remarks</h4>
+                  <h4 className="font-bold uppercase text-[10px] tracking-wider text-slate-400">Call Remarks</h4>
                   <div className="bg-amber-50/60 border border-amber-200/60 p-4 rounded-xl flex flex-col gap-2">
                     {quickViewLead.remark && (
                       <div>
@@ -1533,7 +1533,7 @@ export default function LeadsManager({ leads = [], setLeads, user, handleAcceptL
 
               {/* Web & Social Links */}
               <div className="flex flex-col gap-2">
-                <h4 className="font-bold text-slate-900 uppercase text-[10px] tracking-wider text-slate-400">Links & Profiles</h4>
+                <h4 className="font-bold text-slate-900 uppercase text-[10px] tracking-wider">Links & Profiles</h4>
                 <div className="flex items-center gap-2 flex-wrap">
                   {renderUrlBadge('googleMap', quickViewLead.googleMap)}
                   {renderUrlBadge('website', quickViewLead.website)}
@@ -1580,7 +1580,7 @@ export default function LeadsManager({ leads = [], setLeads, user, handleAcceptL
 
       {/* Dynamic Add / Edit Lead Modal */}
       {leadModal.isOpen && isClient && createPortal(
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[9999] flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-9999 flex items-center justify-center p-4 animate-fade-in">
           <form
             onSubmit={handleLeadFormSubmit}
             className="bg-white rounded-xl shadow-2xl border border-slate-200/80 w-full max-w-3xl overflow-hidden animate-slide-up flex flex-col max-h-[85vh]"
@@ -2040,7 +2040,7 @@ export default function LeadsManager({ leads = [], setLeads, user, handleAcceptL
 
       {/* Add / Edit Custom Column Modal */}
       {columnModal.isOpen && isClient && createPortal(
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[9999] flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-9999 flex items-center justify-center p-4 animate-fade-in">
           <form
             onSubmit={handleSaveColumnSubmit}
             className="bg-white rounded-2xl shadow-2xl border border-slate-200/80 w-full max-w-sm overflow-hidden animate-slide-up"

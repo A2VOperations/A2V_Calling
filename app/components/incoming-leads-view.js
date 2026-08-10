@@ -144,7 +144,7 @@ export default function IncomingLeadsView({
     <div className="flex flex-col gap-6 animate-fade-in pb-12 font-sans">
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed top-5 right-5 z-[9999] px-4 py-3 bg-slate-900 text-emerald-400 border border-slate-700 rounded-xl shadow-xl text-xs font-bold flex items-center gap-2 animate-bounce">
+        <div className="fixed top-5 right-5 z-9999 px-4 py-3 bg-slate-900 text-emerald-400 border border-slate-700 rounded-xl shadow-xl text-xs font-bold flex items-center gap-2 animate-bounce">
           <Sparkles className="w-4 h-4 text-amber-400" />
           <span>{toast}</span>
         </div>
@@ -180,7 +180,7 @@ export default function IncomingLeadsView({
       {/* Control Bar: Search, Bulk Accept, View Switcher & Sort */}
       <div className="bg-white border border-slate-200/80 p-4 rounded-2xl shadow-xs flex flex-wrap items-center justify-between gap-4">
         {/* Search Bar */}
-        <div className="relative flex-1 min-w-[240px]">
+        <div className="relative flex-1 min-w-60">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
@@ -352,7 +352,7 @@ export default function IncomingLeadsView({
                     <span className="text-slate-400 font-semibold flex items-center gap-1.5">
                       <Mail className="w-3.5 h-3.5 text-slate-400" /> Email:
                     </span>
-                    <span className="font-semibold text-slate-700 truncate max-w-[160px]">
+                    <span className="font-semibold text-slate-700 truncate max-w-40">
                       {lead.email || "-"}
                     </span>
                   </div>
@@ -498,7 +498,7 @@ export default function IncomingLeadsView({
       {/* QUICK VIEW DRAWER MODAL */}
       {quickViewLead &&
         createPortal(
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[9999] flex justify-end animate-fade-in">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-9999 flex justify-end animate-fade-in">
             <div className="bg-white w-full max-w-md h-full shadow-2xl flex flex-col justify-between overflow-hidden animate-slide-left">
               {/* Header */}
               <div className="bg-amber-600 text-white p-5 flex items-center justify-between shadow-xs">

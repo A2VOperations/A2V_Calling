@@ -608,7 +608,7 @@ export default function ReportsView({ user: currentUser }) {
                   Detailed breakdown of leads accepted, active pipelines, and revenue per team member
                 </p>
               </div>
-              <div className="relative min-w-[220px]">
+              <div className="relative min-w-55">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
