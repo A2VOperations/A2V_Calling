@@ -1698,7 +1698,7 @@ export default function LeadsManager({
         </div>
       ) : (
         /* Visual Card Grid View */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {filteredLeads.length > 0 ? (
             filteredLeads.map((lead) => (
               <div
