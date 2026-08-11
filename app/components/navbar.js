@@ -379,7 +379,7 @@ const Navbar = ({ user, onToggleSidebar, leads = [], setActiveTab }) => {
                           className="p-4 hover:bg-slate-50 border-b border-slate-50 transition-colors relative"
                         >
                           <div
-                            className={`absolute left-0 top-0 bottom-0 w-1 ${isOverdue ? "bg-rose-500" : "bg-amber-400"}`}
+                            className={`absolute left-0 top-0 bottom-0 w-1 ${isOverdue ? "bg-rose-500" : "bg-blue-400"}`}
                           ></div>
                           <div className="pl-2">
                             <div className="flex justify-between items-start">
@@ -387,7 +387,7 @@ const Navbar = ({ user, onToggleSidebar, leads = [], setActiveTab }) => {
                                 Call {f.leadName}
                               </p>
                               <span
-                                className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${isOverdue ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600"}`}
+                                className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${isOverdue ? "bg-rose-50 text-rose-600" : "bg-blue-50 text-blue-600"}`}
                               >
                                 {isOverdue ? "Overdue" : "Upcoming"}
                               </span>

@@ -369,8 +369,8 @@ export default function FollowUpsView({ user }) {
       return {
         label: `Overdue (${formattedTime})`,
         fullTime: formattedFull,
-        bg: "bg-amber-50 text-amber-700 border-amber-200/80",
-        dot: "bg-amber-500",
+        bg: "bg-blue-50 text-blue-700 border-blue-200/80",
+        dot: "bg-blue-500",
         icon: AlertCircle,
       };
     }
@@ -471,7 +471,6 @@ export default function FollowUpsView({ user }) {
           </button>
         </div>
       </div>
-
 
       {/* Controls Bar: Search, Category Tabs & Sort */}
       <div className="bg-white border border-slate-200/80 p-4 rounded-2xl shadow-xs flex flex-wrap items-center justify-between gap-4">

@@ -3,7 +3,7 @@ import {
   Wallet,
   CreditCard,
   DollarSign,
-  Users,
+  FileText,
   TrendingUp,
 } from "lucide-react";
 
@@ -243,7 +243,7 @@ export default function DashboardOverview({
   const colors = [
     "bg-sky-500",
     "bg-emerald-500",
-    "bg-amber-500",
+    "bg-blue-500",
     "bg-purple-500",
     "bg-rose-500",
   ];
@@ -295,53 +295,53 @@ export default function DashboardOverview({
       </div>
       {/* Financial Overview Banner Cards (Matching Leads Section) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-emerald-300 p-5 rounded-2xl shadow-sm flex items-center justify-between">
+        <div className="bg-[#013564] p-5 rounded-2xl shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 block">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-white block">
               TOTAL PAID AMOUNT
             </span>
-            <span className="text-2xl font-black font-mono mt-0.5 block">
+            <span className="text-2xl font-black font-mono mt-0.5 block text-white">
               ₹{totalPaidSum.toLocaleString("en-IN")}
             </span>
-            <span className="text-[10px] font-medium text-emerald-600/90 mt-1 block">
+            <span className="text-[10px] font-medium text-white mt-1 block">
               Revenue Collected across leads
             </span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-white/50 backdrop-blur-xs flex items-center justify-center text-black shrink-0">
+          <div className="w-12 h-12 rounded-xl bg-white/50 backdrop-blur-xs flex items-center justify-center text-white shrink-0">
             <Wallet className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="bg-amber-300 p-5 rounded-2xl shadow-sm flex items-center justify-between">
+        <div className="bg-[#013564] p-5 rounded-2xl shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-600 block">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-white block">
               TOTAL PENDING BALANCE
             </span>
-            <span className="text-2xl font-black font-mono mt-0.5 block">
+            <span className="text-2xl font-black font-mono mt-0.5 block text-white">
               ₹{totalBalanceSum.toLocaleString("en-IN")}
             </span>
-            <span className="text-[10px] font-medium text-amber-600/90 mt-1 block">
+            <span className="text-[10px] font-medium text-white mt-1 block">
               Outstanding receivables
             </span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-white/50 backdrop-blur-xs flex items-center justify-center text-black shrink-0">
+          <div className="w-12 h-12 rounded-xl bg-white/50 backdrop-blur-xs flex items-center justify-center text-white shrink-0">
             <CreditCard className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="bg-blue-300 p-5 rounded-2xl shadow-sm flex items-center justify-between">
+        <div className="bg-[#013564] p-5 rounded-2xl shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-600 block">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-white block">
               TOTAL DEAL PIPELINE
             </span>
-            <span className="text-2xl font-black font-mono mt-0.5 block">
+            <span className="text-2xl font-black font-mono mt-0.5 block text-white">
               ₹{totalDealSum.toLocaleString("en-IN")}
             </span>
-            <span className="text-[10px] font-medium text-sky-600/90 mt-1 block">
+            <span className="text-[10px] font-medium text-white mt-1 block">
               Combined Total Contract Value
             </span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-white/50 backdrop-blur-xs flex items-center justify-center text-black shrink-0">
+          <div className="w-12 h-12 rounded-xl bg-white/50 backdrop-blur-xs flex items-center justify-center text-white shrink-0">
             <DollarSign className="w-6 h-6" />
           </div>
         </div>
@@ -361,11 +361,11 @@ export default function DashboardOverview({
               </span>
             </div>
             <div className="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center text-sky-500">
-              <Users className="w-5 h-5" />
+              <FileText className="w-5 h-5" />
             </div>
           </div>
           {/* SVG Sparkline */}
-          <div className="h-8 w-full mt-2">
+          <div className="h-10 w-full">
             <svg
               className="w-full h-full"
               viewBox="0 0 100 30"
@@ -479,7 +479,7 @@ export default function DashboardOverview({
                 {pendingTodosCount} / {todos.length}
               </span>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500">
+            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500">
               <svg
                 className="w-5 h-5"
                 fill="none"
@@ -503,7 +503,7 @@ export default function DashboardOverview({
             </div>
             <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
               <div
-                className="bg-amber-500 h-full transition-all duration-500"
+                className="bg-blue-500 h-full transition-all duration-500"
                 style={{ width: `${todoCompletionPct}%` }}
               />
             </div>
@@ -813,29 +813,33 @@ export default function DashboardOverview({
 
       {/* Incoming Leads (Action Required) Section */}
       {incomingLeads.length > 0 && (
-        <div className="bg-linear-to-r from-amber-500/10 via-amber-50/50 to-orange-50/60 border border-amber-200/90 rounded-2xl p-6 shadow-sm">
+        <div className="bg-linear-to-r from-blue-500/10 via-blue-50/50 to-sky-50/60 border border-blue-200/90 rounded-2xl p-6 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-amber-500 text-white rounded-xl shadow-md shadow-amber-500/20 shrink-0">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              <div className="p-2.5 bg-blue-900 text-white rounded-xl shadow-md shadow-blue-500/20 shrink-0">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                  />
                 </svg>
               </div>
               <div>
-                <h3 className="font-extrabold text-amber-950 text-base flex items-center gap-2">
-                  <span>Incoming Leads (Requires Acceptance)</span>
-                  <span className="bg-amber-500 text-white text-xs font-black px-2.5 py-0.5 rounded-full shadow-xs">
-                    {incomingLeads.length} {incomingLeads.length === 1 ? 'Lead' : 'Leads'} Available
-                  </span>
+                <h3 className="font-extrabold text-blue-950 text-base flex items-center gap-2">
+                  <span>Incoming Leads ({incomingLeads.length})</span>
                 </h3>
-                <p className="text-xs text-amber-800/80 font-medium">
-                  New unassigned leads waiting to be accepted by team members
-                </p>
               </div>
             </div>
             <button
-              onClick={() => setActiveTab('incoming-leads')}
-              className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+              onClick={() => setActiveTab("incoming-leads")}
+              className="px-3.5 py-2 bg-blue-900 hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
             >
               <span>View All Incoming Leads</span>
               <span>→</span>
@@ -846,27 +850,55 @@ export default function DashboardOverview({
             {incomingLeads.slice(0, 3).map((lead) => (
               <div
                 key={lead.id || lead._id}
-                className="bg-white border border-amber-200/80 p-4 rounded-xl shadow-xs flex flex-col justify-between gap-3 hover:shadow-md transition-all"
+                className="bg-white border border-blue-200/80 p-4 rounded-xl shadow-xs flex flex-col justify-between gap-3 hover:shadow-md transition-all"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold text-slate-900 text-sm truncate">{lead.name || 'Unnamed Client'}</span>
-                    <span className="text-[10px] font-extrabold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60 shrink-0">
-                      {lead.areaZone || 'New'}
+                    <span className="font-bold text-slate-900 text-sm truncate">
+                      {lead.name || "Unnamed Client"}
+                    </span>
+                    <span className="text-[10px] font-extrabold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60 shrink-0">
+                      {lead.areaZone || "New"}
                     </span>
                   </div>
                   <div className="text-xs text-slate-600 font-medium mt-2 space-y-1">
-                    {lead.phone && <div className="flex items-center gap-1.5"><span>📞</span> <span className="font-bold font-mono">{lead.phone}</span></div>}
-                    {lead.email && <div className="flex items-center gap-1.5 truncate"><span>✉️</span> <span className="truncate">{lead.email}</span></div>}
-                    <div className="text-[10px] text-slate-400 font-semibold pt-1">Added By: {lead.createdBy || 'System'}</div>
+                    {lead.phone && (
+                      <div className="flex items-center gap-1.5">
+                        <span>📞</span>{" "}
+                        <span className="font-bold font-mono">
+                          {lead.phone}
+                        </span>
+                      </div>
+                    )}
+                    {lead.email && (
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span>✉️</span>{" "}
+                        <span className="truncate">{lead.email}</span>
+                      </div>
+                    )}
+                    <div className="text-[10px] text-slate-400 font-semibold pt-1">
+                      Added By: {lead.createdBy || "System"}
+                    </div>
                   </div>
                 </div>
                 <button
-                  onClick={() => handleAcceptLead && handleAcceptLead(lead.id || lead._id)}
-                  className="w-full py-2 bg-amber-500 hover:bg-amber-600 active:scale-98 text-white font-bold text-xs rounded-lg shadow-sm transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  onClick={() =>
+                    handleAcceptLead && handleAcceptLead(lead.id || lead._id)
+                  }
+                  className="w-full py-2 bg-blue-900 hover:bg-blue-600 active:scale-98 text-white font-bold text-xs rounded-lg shadow-sm transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                   <span>Accept Lead Now</span>
                 </button>
@@ -945,7 +977,7 @@ export default function DashboardOverview({
                               lead.status === "Active"
                                 ? "bg-sky-50 text-sky-600 border border-sky-200/60"
                                 : lead.status === "Contacted"
-                                  ? "bg-amber-50 text-amber-600 border border-amber-200/60"
+                                  ? "bg-blue-50 text-blue-600 border border-blue-200/60"
                                   : lead.status === "New"
                                     ? "bg-emerald-50 text-emerald-600 border border-emerald-200/60"
                                     : lead.status === "Follow-up Required"
@@ -975,7 +1007,7 @@ export default function DashboardOverview({
                               )}
                             </span>
                             {(Number(lead.balanceAmount) || 0) > 0 && (
-                              <span className="text-[10px] text-amber-600 font-bold">
+                              <span className="text-[10px] text-blue-600 font-bold">
                                 Bal: ₹
                                 {(
                                   Number(lead.balanceAmount) || 0

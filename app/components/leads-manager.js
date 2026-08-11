@@ -81,6 +81,15 @@ const BASE_COLUMNS = [
   { key: "campaign", label: "Source Campaign", type: "text" },
 ];
 
+const FORM_STEPS = [
+  "general",
+  "contact",
+  "financials",
+  "call",
+  "documents",
+  "custom",
+];
+
 export default function LeadsManager({
   leads = [],
   setLeads,
@@ -142,6 +151,28 @@ export default function LeadsManager({
   // Form states
   const [formValues, setFormValues] = useState({});
   const [activeFormTab, setActiveFormTab] = useState("general");
+
+  const currentStepIndex = FORM_STEPS.indexOf(activeFormTab);
+
+  const handleNextStep = () => {
+    if (activeFormTab === "general" && !formValues.name?.trim()) {
+      alert("Please enter the Client Name before moving to the next step.");
+      return;
+    }
+    if (activeFormTab === "contact" && !formValues.phone?.trim()) {
+      alert("Please enter the Phone Number before moving to the next step.");
+      return;
+    }
+    if (currentStepIndex < FORM_STEPS.length - 1) {
+      setActiveFormTab(FORM_STEPS[currentStepIndex + 1]);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (currentStepIndex > 0) {
+      setActiveFormTab(FORM_STEPS[currentStepIndex - 1]);
+    }
+  };
 
   // New/Edit column form states
   const [newColLabel, setNewColLabel] = useState("");
@@ -389,7 +420,7 @@ export default function LeadsManager({
 
     if (status === "Incoming") {
       styles =
-        "bg-amber-50 text-amber-700 border-amber-200/80 ring-1 ring-amber-500/10 animate-pulse";
+        "bg-blue-50 text-blue-700 border-blue-200/80 ring-1 ring-blue-500/10 animate-pulse";
       Icon = Sparkles;
     } else if (status === "Active") {
       styles =
@@ -397,7 +428,7 @@ export default function LeadsManager({
       Icon = CheckCircle2;
     } else if (status === "Contacted") {
       styles =
-        "bg-amber-50 text-amber-700 border-amber-200/70 ring-1 ring-amber-500/10";
+        "bg-blue-50 text-blue-700 border-blue-200/70 ring-1 ring-blue-500/10";
       Icon = Clock;
     } else if (status === "New") {
       styles =
@@ -512,7 +543,7 @@ export default function LeadsManager({
             e.stopPropagation();
             if (handleAcceptLead) handleAcceptLead(lead.id || lead._id);
           }}
-          className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-xs rounded-lg shadow-xs transition-all cursor-pointer"
+          className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-500 hover:bg-blue-600 active:scale-95 text-white font-bold text-xs rounded-lg shadow-xs transition-all cursor-pointer"
         >
           <CheckCircle2 className="w-3.5 h-3.5" />
           <span>Accept Lead</span>
@@ -556,7 +587,7 @@ export default function LeadsManager({
           <span
             className={`inline-flex items-center gap-1 font-mono text-xs font-bold px-2 py-0.5 rounded-md border ${
               isPending
-                ? "text-amber-700 bg-amber-50 border-amber-200/70"
+                ? "text-blue-700 bg-blue-50 border-blue-200/70"
                 : "text-slate-600 bg-slate-100 border-slate-200"
             }`}
           >
@@ -636,8 +667,8 @@ export default function LeadsManager({
   // Form Submission
   const handleLeadFormSubmit = async (e) => {
     e.preventDefault();
-    if (!formValues.name || !formValues.email || !formValues.phone) {
-      alert("Client Name, Email, and Phone Number are required fields.");
+    if (!formValues.name || !formValues.phone) {
+      alert("Client Name and Phone Number are required fields.");
       return;
     }
 
@@ -660,6 +691,7 @@ export default function LeadsManager({
 
     const payload = {
       ...formValues,
+      email: formValues.email || "",
       totalAmount:
         formValues.totalAmount !== "" ? Number(formValues.totalAmount) : 0,
       paidAmount:
@@ -1020,8 +1052,8 @@ export default function LeadsManager({
           onClick={() => setQuickFilterTab("incoming")}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
             quickFilterTab === "incoming"
-              ? "bg-amber-500 text-white shadow-md shadow-amber-500/20"
-              : "text-amber-800 bg-amber-50/80 hover:bg-amber-100 border border-amber-200/80"
+              ? "bg-blue-500 text-white shadow-md shadow-blue-500/20"
+              : "text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-200/80"
           }`}
         >
           <Sparkles className="w-4 h-4" />
@@ -1029,8 +1061,8 @@ export default function LeadsManager({
           <span
             className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
               quickFilterTab === "incoming"
-                ? "bg-amber-600 text-white"
-                : "bg-amber-200/80 text-amber-900"
+                ? "bg-blue-600 text-white"
+                : "bg-blue-200/80 text-blue-900"
             }`}
           >
             {counts.incoming}
@@ -1472,13 +1504,13 @@ export default function LeadsManager({
             </span>
           )}
           {filters.paymentStatus !== "All" && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
               Payment: {filters.paymentStatus}
               <button
                 onClick={() =>
                   setFilters((prev) => ({ ...prev, paymentStatus: "All" }))
                 }
-                className="hover:text-amber-900 cursor-pointer"
+                className="hover:text-blue-900 cursor-pointer"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -1744,9 +1776,9 @@ export default function LeadsManager({
                       </span>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between bg-amber-50/80 border border-amber-200/80 p-2 rounded-xl text-xs">
-                      <div className="flex items-center gap-1 text-amber-800 font-bold">
-                        <Sparkles className="w-3 h-3 text-amber-600 animate-pulse" />
+                    <div className="flex items-center justify-between bg-blue-50/80 border border-blue-200/80 p-2 rounded-xl text-xs">
+                      <div className="flex items-center gap-1 text-blue-800 font-bold">
+                        <Sparkles className="w-3 h-3 text-blue-600 animate-pulse" />
                         <span>Incoming</span>
                       </div>
                       <button
@@ -1754,7 +1786,7 @@ export default function LeadsManager({
                           handleAcceptLead &&
                           handleAcceptLead(lead.id || lead._id)
                         }
-                        className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold text-[11px] rounded-lg shadow-xs cursor-pointer transition-all flex items-center gap-1"
+                        className="px-2.5 py-1 bg-blue-500 hover:bg-blue-600 active:scale-95 text-white font-bold text-[11px] rounded-lg shadow-xs cursor-pointer transition-all flex items-center gap-1"
                       >
                         <CheckCircle2 className="w-3 h-3" />
                         <span>Accept Lead</span>
@@ -1781,7 +1813,7 @@ export default function LeadsManager({
                       <div
                         className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border ${
                           (Number(lead.balanceAmount) || 0) > 0
-                            ? "text-amber-700 bg-amber-50/80 border-amber-200/60"
+                            ? "text-blue-700 bg-blue-50/80 border-blue-200/60"
                             : "text-slate-600 bg-slate-100 border-slate-200"
                         }`}
                       >
@@ -1846,14 +1878,20 @@ export default function LeadsManager({
                 <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-1.5">
                   {/* View Images Button */}
                   {(() => {
-                    const imgCount = (quickViewLead?.id === lead.id ? quickViewLead : lead).documents?.filter(
-                      (d) =>
-                        d.url &&
-                        (/\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(d.url) ||
-                          /\.(jpg|jpeg|png|webp|gif|svg)/i.test(
-                            d.fileName || "",
-                          )),
-                    ).length || 0;
+                    const imgCount =
+                      (quickViewLead?.id === lead.id
+                        ? quickViewLead
+                        : lead
+                      ).documents?.filter(
+                        (d) =>
+                          d.url &&
+                          (/\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(
+                            d.url,
+                          ) ||
+                            /\.(jpg|jpeg|png|webp|gif|svg)/i.test(
+                              d.fileName || "",
+                            )),
+                      ).length || 0;
                     return (
                       <button
                         onClick={() => handleOpenImageModal(lead)}
@@ -2005,11 +2043,11 @@ export default function LeadsManager({
                           ).toLocaleString("en-IN")}
                         </span>
                       </div>
-                      <div className="bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
-                        <span className="text-[9px] uppercase font-bold text-amber-400 block tracking-wider">
+                      <div className="bg-blue-500/10 border border-blue-500/20 p-2.5 rounded-xl">
+                        <span className="text-[9px] uppercase font-bold text-blue-400 block tracking-wider">
                           Balance
                         </span>
-                        <span className="text-xs font-mono font-black text-amber-300 mt-0.5 block">
+                        <span className="text-xs font-mono font-black text-blue-300 mt-0.5 block">
                           ₹
                           {(
                             Number(quickViewLead.balanceAmount) || 0
@@ -2127,8 +2165,8 @@ export default function LeadsManager({
                           <span>{quickViewLead.handledBy}</span>
                         </span>
                       ) : (
-                        <span className="font-black text-amber-600 text-xs flex items-center gap-1.5 mt-0.5">
-                          <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse shrink-0" />
+                        <span className="font-black text-blue-600 text-xs flex items-center gap-1.5 mt-0.5">
+                          <Sparkles className="w-3.5 h-3.5 text-blue-500 animate-pulse shrink-0" />
                           <span>Unassigned / Incoming</span>
                         </span>
                       )}
@@ -2142,10 +2180,10 @@ export default function LeadsManager({
                     <h4 className="font-bold uppercase text-[10px] tracking-wider text-slate-400">
                       Call Remarks
                     </h4>
-                    <div className="bg-amber-50/80 border border-amber-200/80 p-4 rounded-2xl flex flex-col gap-2.5 shadow-2xs">
+                    <div className="bg-blue-50/80 border border-blue-200/80 p-4 rounded-2xl flex flex-col gap-2.5 shadow-2xs">
                       {quickViewLead.remark && (
                         <div>
-                          <span className="text-[10px] text-amber-800 font-bold uppercase block tracking-wider">
+                          <span className="text-[10px] text-blue-800 font-bold uppercase block tracking-wider">
                             Primary Remark
                           </span>
                           <p className="font-semibold text-slate-800 text-xs mt-0.5">
@@ -2157,11 +2195,11 @@ export default function LeadsManager({
                         <div
                           className={
                             quickViewLead.remark
-                              ? "border-t border-amber-200/60 pt-2"
+                              ? "border-t border-blue-200/60 pt-2"
                               : ""
                           }
                         >
-                          <span className="text-[10px] text-amber-800 font-bold uppercase block tracking-wider">
+                          <span className="text-[10px] text-blue-800 font-bold uppercase block tracking-wider">
                             Follow-up Remark
                           </span>
                           <p className="font-semibold text-slate-800 text-xs mt-0.5">
@@ -2284,7 +2322,7 @@ export default function LeadsManager({
                         status: "Active",
                       }));
                     }}
-                    className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-orange-500/25 transition-all cursor-pointer flex items-center gap-1.5"
+                    className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-orange-500 hover:from-blue-600 hover:to-orange-600 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-orange-500/25 transition-all cursor-pointer flex items-center gap-1.5"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Accept Lead Now</span>
@@ -2318,14 +2356,27 @@ export default function LeadsManager({
               className="bg-white rounded-xl shadow-2xl border border-slate-200/80 w-full max-w-3xl overflow-hidden animate-slide-up flex flex-col max-h-[85vh]"
             >
               {/* Modal Header */}
-              <div className="bg-slate-50 border-b border-slate-100 px-6 py-4.5 flex justify-between items-center">
+              <div className="bg-slate-50 border-b border-slate-100 px-6 py-4 flex justify-between items-center">
                 <div>
-                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2 flex-wrap">
                     <User className="w-4 h-4 text-sky-500" />
                     <span>
                       {leadModal.type === "add"
                         ? "Create Lead Profile"
                         : "Edit Lead Profile"}
+                    </span>
+                    <span className="text-slate-300 font-normal">•</span>
+                    <span className="text-sky-700 font-extrabold text-xs bg-sky-100/80 px-2.5 py-0.5 rounded-lg border border-sky-200 inline-flex items-center gap-1.5 shadow-2xs">
+                      {
+                        [
+                          { id: "general", label: "General Info" },
+                          { id: "contact", label: "Contact & Social" },
+                          { id: "financials", label: "Financials" },
+                          { id: "call", label: "Call Activity" },
+                          { id: "documents", label: "Documents / Images" },
+                          { id: "custom", label: "Custom Fields" },
+                        ].find((t) => t.id === activeFormTab)?.label || "General Info"
+                      }
                     </span>
                   </h3>
                   <p className="text-[11px] text-slate-400 font-medium mt-0.5">
@@ -2345,46 +2396,14 @@ export default function LeadsManager({
                 </button>
               </div>
 
-              {/* Modal Navigation Tabs */}
-              <div className="flex border-b border-slate-100 bg-slate-50/50 px-4 overflow-x-auto">
-                {[
-                  { id: "general", label: "General Info", icon: User },
-                  { id: "contact", label: "Contact & Social", icon: Globe },
-                  { id: "financials", label: "Financials", icon: DollarSign },
-                  { id: "call", label: "Call Activity", icon: Phone },
-                  {
-                    id: "documents",
-                    label: `Documents / Images (${
-                      leadModal.type === "add"
-                        ? pendingFiles.length
-                        : (formValues.documents || []).length
-                    })`,
-                    icon: Paperclip,
-                  },
-                  {
-                    id: "custom",
-                    label: `Custom Fields (${customColumns.length})`,
-                    icon: Layers,
-                  },
-                ].map((tab) => {
-                  const isActive = activeFormTab === tab.id;
-                  const TabIcon = tab.icon;
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setActiveFormTab(tab.id)}
-                      className={`px-4 py-3 border-b-2 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
-                        isActive
-                          ? "border-sky-500 text-sky-600 font-bold"
-                          : "border-transparent text-slate-500 hover:text-slate-800"
-                      }`}
-                    >
-                      <TabIcon className="w-3.5 h-3.5" />
-                      <span>{tab.label}</span>
-                    </button>
-                  );
-                })}
+              {/* Visual Progress Bar */}
+              <div className="w-full bg-slate-100 h-1">
+                <div
+                  className="bg-sky-500 h-1 transition-all duration-300 ease-in-out"
+                  style={{
+                    width: `${((currentStepIndex + 1) / FORM_STEPS.length) * 100}%`,
+                  }}
+                />
               </div>
 
               {/* Scrollable Form Content */}
@@ -2495,23 +2514,6 @@ export default function LeadsManager({
                             : "System / Unspecified")
                         }
                         className="w-full h-10 rounded-xl border border-slate-200/80 px-3.5 text-xs font-semibold text-slate-500 bg-slate-100/90 cursor-not-allowed outline-none select-none"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 tracking-wider uppercase pl-0.5">
-                        Handled By Agent
-                      </label>
-                      <input
-                        type="text"
-                        value={formValues.handledBy || ""}
-                        onChange={(e) =>
-                          setFormValues((prev) => ({
-                            ...prev,
-                            handledBy: e.target.value,
-                          }))
-                        }
-                        placeholder="Leave blank for Incoming / Unassigned"
-                        className="w-full h-10 rounded-xl border border-slate-200 px-3.5 text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10 outline-none transition-all bg-white"
                       />
                     </div>
                   </div>
@@ -2731,7 +2733,7 @@ export default function LeadsManager({
                           }))
                         }
                         placeholder="e.g. 25000"
-                        className="w-full h-10 rounded-xl border border-slate-200 px-3.5 text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/10 outline-none transition-all bg-white font-mono"
+                        className="w-full h-10 rounded-xl border border-slate-200 px-3.5 text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 outline-none transition-all bg-white font-mono"
                       />
                     </div>
                   </div>
@@ -2859,11 +2861,13 @@ export default function LeadsManager({
                             ? `Selected Images / Documents (${pendingFiles.length})`
                             : `Attached Documents (${(formValues.documents || []).length})`}
                         </span>
-                        {leadModal.type === "add" && pendingFiles.length > 0 && (
-                          <p className="text-[10px] text-sky-600 font-medium mt-0.5">
-                            Will be uploaded automatically when you click Create Lead
-                          </p>
-                        )}
+                        {leadModal.type === "add" &&
+                          pendingFiles.length > 0 && (
+                            <p className="text-[10px] text-sky-600 font-medium mt-0.5">
+                              Will be uploaded automatically when you click
+                              Create Lead
+                            </p>
+                          )}
                       </div>
                       <label
                         className={`px-3 py-1.5 font-bold text-[11px] rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 border ${
@@ -2935,69 +2939,74 @@ export default function LeadsManager({
                             No Images or Files Selected
                           </span>
                           <p className="text-[11px] text-slate-400 font-medium px-6 max-w-sm">
-                            Click "Upload / Select Images" above to select photos or documents to attach while creating this lead.
+                            Click "Upload / Select Images" above to select
+                            photos or documents to attach while creating this
+                            lead.
                           </p>
                         </div>
                       )
-                    ) : (
-                      /* Mode: Edit Lead - Uploaded Documents View */
-                      (formValues.documents || []).length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {formValues.documents.map((doc, idx) => {
-                            const isImg =
-                              doc.url &&
-                              (/\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(doc.url) ||
-                                /\.(jpg|jpeg|png|webp|gif|svg)/i.test(doc.fileName || ""));
-                            return (
-                              <a
-                                key={doc.public_id || idx}
-                                href={doc.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex flex-col bg-slate-50 hover:bg-slate-100/90 border border-slate-200 p-3 rounded-2xl transition-all group overflow-hidden"
-                              >
-                                {isImg ? (
-                                  <div className="w-full h-28 rounded-xl bg-slate-200 overflow-hidden mb-2 relative">
-                                    <img
-                                      src={doc.url}
-                                      alt={doc.fileName || `Image ${idx + 1}`}
-                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                    />
-                                    <div className="absolute top-1.5 right-1.5 bg-slate-900/70 backdrop-blur-xs text-white p-1 rounded-md">
-                                      <ImageIcon className="w-3 h-3" />
-                                    </div>
-                                  </div>
-                                ) : null}
-                                <div className="flex items-center justify-between gap-2 min-w-0">
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <Paperclip className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                    <span className="text-xs font-semibold text-slate-700 truncate group-hover:text-sky-600">
-                                      {doc.fileName || `Document ${idx + 1}`}
-                                    </span>
+                    ) : /* Mode: Edit Lead - Uploaded Documents View */
+                    (formValues.documents || []).length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {formValues.documents.map((doc, idx) => {
+                          const isImg =
+                            doc.url &&
+                            (/\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(
+                              doc.url,
+                            ) ||
+                              /\.(jpg|jpeg|png|webp|gif|svg)/i.test(
+                                doc.fileName || "",
+                              ));
+                          return (
+                            <a
+                              key={doc.public_id || idx}
+                              href={doc.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex flex-col bg-slate-50 hover:bg-slate-100/90 border border-slate-200 p-3 rounded-2xl transition-all group overflow-hidden"
+                            >
+                              {isImg ? (
+                                <div className="w-full h-28 rounded-xl bg-slate-200 overflow-hidden mb-2 relative">
+                                  <img
+                                    src={doc.url}
+                                    alt={doc.fileName || `Image ${idx + 1}`}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  />
+                                  <div className="absolute top-1.5 right-1.5 bg-slate-900/70 backdrop-blur-xs text-white p-1 rounded-md">
+                                    <ImageIcon className="w-3 h-3" />
                                   </div>
                                 </div>
-                                <span className="text-[10px] text-slate-400 font-medium mt-1">
-                                  {doc.uploadedAt
-                                    ? new Date(
-                                        doc.uploadedAt,
-                                      ).toLocaleDateString("en-IN")
-                                    : ""}
-                                </span>
-                              </a>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="py-10 text-center bg-slate-50 border border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2">
-                          <Paperclip className="w-8 h-8 text-slate-300 stroke-1" />
-                          <span className="text-xs font-bold text-slate-600">
-                            No Documents or Images Attached
-                          </span>
-                          <p className="text-[11px] text-slate-400 font-medium px-6 max-w-sm">
-                            Upload photos, contracts, or other files related to this lead.
-                          </p>
-                        </div>
-                      )
+                              ) : null}
+                              <div className="flex items-center justify-between gap-2 min-w-0">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <Paperclip className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                  <span className="text-xs font-semibold text-slate-700 truncate group-hover:text-sky-600">
+                                    {doc.fileName || `Document ${idx + 1}`}
+                                  </span>
+                                </div>
+                              </div>
+                              <span className="text-[10px] text-slate-400 font-medium mt-1">
+                                {doc.uploadedAt
+                                  ? new Date(doc.uploadedAt).toLocaleDateString(
+                                      "en-IN",
+                                    )
+                                  : ""}
+                              </span>
+                            </a>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="py-10 text-center bg-slate-50 border border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2">
+                        <Paperclip className="w-8 h-8 text-slate-300 stroke-1" />
+                        <span className="text-xs font-bold text-slate-600">
+                          No Documents or Images Attached
+                        </span>
+                        <p className="text-[11px] text-slate-400 font-medium px-6 max-w-sm">
+                          Upload photos, contracts, or other files related to
+                          this lead.
+                        </p>
+                      </div>
                     )}
                   </div>
                 )}
@@ -3100,24 +3109,57 @@ export default function LeadsManager({
               </div>
 
               {/* Modal Actions Footer */}
-              <div className="bg-slate-50 border-t border-slate-100 px-6 py-4 flex items-center justify-end gap-3 shrink-0">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setLeadModal({ isOpen: false, type: "add", leadId: null })
-                  }
-                  className="px-4 py-2 border border-slate-200 hover:bg-slate-100 text-slate-600 font-bold text-xs uppercase rounded-xl transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs uppercase rounded-xl shadow-md shadow-sky-600/20 transition-all cursor-pointer"
-                >
-                  {leadModal.type === "add"
-                    ? "Create Lead Profile"
-                    : "Save Changes"}
-                </button>
+              <div className="bg-slate-50 border-t border-slate-100 px-6 py-4 flex items-center justify-between gap-3 shrink-0">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setLeadModal({ isOpen: false, type: "add", leadId: null })
+                    }
+                    className="px-4 py-2 border border-slate-200 hover:bg-slate-100 text-slate-600 font-bold text-xs uppercase rounded-xl transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <span className="text-[11px] font-bold text-slate-400 ml-2 hidden sm:inline-block">
+                    Step {currentStepIndex + 1} of {FORM_STEPS.length}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 sm:gap-3">
+                  {currentStepIndex > 0 && (
+                    <button
+                      type="button"
+                      onClick={handlePrevStep}
+                      className="px-4 py-2.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs uppercase rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span>Back</span>
+                    </button>
+                  )}
+
+                  {currentStepIndex < FORM_STEPS.length - 1 ? (
+                    <button
+                      type="button"
+                      onClick={handleNextStep}
+                      className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs uppercase rounded-xl shadow-md shadow-sky-600/20 transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span>Next</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase rounded-xl shadow-md shadow-emerald-600/20 transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>
+                        {leadModal.type === "add"
+                          ? "Create Lead Profile"
+                          : "Save Changes"}
+                      </span>
+                    </button>
+                  )}
+                </div>
               </div>
             </form>
           </div>,
@@ -3301,7 +3343,7 @@ export default function LeadsManager({
 
             {/* Bottom Thumbnail Bar */}
             {imageModal.images.length > 1 && (
-              <div className="flex items-center justify-center gap-2 overflow-x-auto pt-3 border-t border-slate-800/80">
+              <div className="flex items-center justify-center gap-2 overflow-x-auto py-3 border-t border-slate-800/80">
                 {imageModal.images.map((img, idx) => (
                   <button
                     key={idx}
