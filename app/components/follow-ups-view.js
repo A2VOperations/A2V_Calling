@@ -6,7 +6,6 @@ import {
   Clock,
   Phone,
   User,
-  CheckCircle2,
   Plus,
   Search,
   Trash2,
@@ -596,7 +595,7 @@ export default function FollowUpsView({ user }) {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {filteredFollowUps.map((f) => {
             const isCompleted = f.status === "Completed";
             const badge = getScheduleBadge(f.scheduledAt, isCompleted);
@@ -804,7 +803,7 @@ export default function FollowUpsView({ user }) {
                     onChange={(e) =>
                       setFormData({ ...formData, phoneNumber: e.target.value })
                     }
-                    placeholder="+1 (555) 000-0000"
+                    placeholder="Enter Phone Number"
                     className="w-full h-10 rounded-xl border border-slate-200 px-3.5 text-xs font-semibold text-slate-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10 outline-none transition-all font-mono"
                   />
                 </div>

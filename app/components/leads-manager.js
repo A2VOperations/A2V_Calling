@@ -40,6 +40,7 @@ import {
   Image as ImageIcon,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 
 // Base Standard Columns requested by user
@@ -98,6 +99,7 @@ export default function LeadsManager({
   initialFilter = "all",
 }) {
   const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingFiles, setPendingFiles] = useState([]);
   const [imageModal, setImageModal] = useState({
     isOpen: false,
@@ -144,6 +146,7 @@ export default function LeadsManager({
   const [isColumnDropdownOpen, setIsColumnDropdownOpen] = useState(false);
   const [hiddenColumnKeys, setHiddenColumnKeys] = useState([]);
   const dropdownRef = useRef(null);
+  const isSubmitButtonClickedRef = useRef(false);
 
   // Sorting state
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
@@ -233,6 +236,59 @@ export default function LeadsManager({
 
   const removePendingFile = (index) => {
     setPendingFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDeleteDocument = async (leadId, docObj) => {
+    if (!leadId) return;
+    const identifier = docObj._id || docObj.public_id;
+    if (!identifier) return;
+
+    if (
+      !window.confirm(
+        `Are you sure you want to delete image "${docObj.fileName || "document"}" from Cloudinary?`,
+      )
+    ) {
+      return;
+    }
+
+    setUploadingDoc(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/leads/${leadId}/documents/${encodeURIComponent(identifier)}`,
+        { method: "DELETE" },
+      );
+      const data = await response.json();
+      if (data.success) {
+        if (leadModal.leadId === leadId) {
+          setFormValues((prev) => ({
+            ...prev,
+            documents: data.documents,
+            leadImage: data.leadImage,
+          }));
+        }
+        setLeads((prev) =>
+          prev.map((l) =>
+            l.id === leadId
+              ? { ...l, documents: data.documents, leadImage: data.leadImage }
+              : l,
+          ),
+        );
+        if (quickViewLead?.id === leadId) {
+          setQuickViewLead((prev) =>
+            prev
+              ? { ...prev, documents: data.documents, leadImage: data.leadImage }
+              : null,
+          );
+        }
+      } else {
+        alert("Failed to delete image: " + (data.message || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Error deleting image:", err);
+      alert("Error deleting image");
+    } finally {
+      setUploadingDoc(false);
+    }
   };
 
   const handleOpenImageModal = (lead) => {
@@ -667,10 +723,28 @@ export default function LeadsManager({
   // Form Submission
   const handleLeadFormSubmit = async (e) => {
     e.preventDefault();
-    if (!formValues.name || !formValues.phone) {
+
+    // Strict guard: Lead will ONLY submit if user explicitly clicks the submit button
+    if (!isSubmitButtonClickedRef.current) {
+      return;
+    }
+    // Reset flag immediately
+    isSubmitButtonClickedRef.current = false;
+
+    // Guard: If form submission is triggered while not on the final step, advance to next step instead
+    if (currentStepIndex < FORM_STEPS.length - 1) {
+      handleNextStep();
+      return;
+    }
+
+    if (isSubmitting) return;
+
+    if (!formValues.name?.trim() || !formValues.phone?.trim()) {
       alert("Client Name and Phone Number are required fields.");
       return;
     }
+
+    setIsSubmitting(true);
 
     const currentUser =
       user ||
@@ -720,6 +794,8 @@ export default function LeadsManager({
           if (pendingFiles.length > 0) {
             setUploadingDoc(true);
             let updatedDocs = createdLead.documents || [];
+            let uploadFailed = false;
+
             for (const item of pendingFiles) {
               const fileData = new FormData();
               fileData.append("document", item.file);
@@ -733,20 +809,34 @@ export default function LeadsManager({
                 );
                 const docData = await docRes.json();
                 if (docData.success) {
-                  updatedDocs = docData.documents;
+                  updatedDocs = docData.documents || updatedDocs;
+                  if (docData.leadImage) {
+                    createdLead.leadImage = docData.leadImage;
+                  } else if (docData.lead?.leadImage) {
+                    createdLead.leadImage = docData.lead.leadImage;
+                  }
+                } else {
+                  uploadFailed = true;
+                  console.error("Error uploading pending file:", docData.message);
                 }
               } catch (err) {
+                uploadFailed = true;
                 console.error("Error uploading pending file:", err);
               }
             }
             createdLead = { ...createdLead, documents: updatedDocs };
             setUploadingDoc(false);
+
+            if (uploadFailed) {
+              alert("Lead created, but one or more attached images failed to upload. You can re-upload them from Documents tab.");
+            }
           }
 
           setLeads((prev) => [createdLead, ...prev]);
           setPendingFiles([]);
         } else {
           alert("Failed to add lead: " + (data.error || "Unknown error"));
+          setIsSubmitting(false);
           return;
         }
       } else {
@@ -768,15 +858,19 @@ export default function LeadsManager({
             setQuickViewLead(updatedLead);
         } else {
           alert("Failed to update lead: " + (data.error || "Unknown error"));
+          setIsSubmitting(false);
           return;
         }
       }
 
       setLeadModal({ isOpen: false, type: "add", leadId: null });
       setFormValues({});
+      setActiveFormTab("general");
     } catch (err) {
       console.error("Error saving lead:", err);
       alert("Error saving lead. Is the backend running?");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -832,10 +926,25 @@ export default function LeadsManager({
     }
   };
 
-  // Dynamic filter options derived from leads dataset
-  const uniqueAreaZones = Array.from(
-    new Set(leads.map((l) => l.areaZone).filter(Boolean)),
-  ).sort();
+  // Dynamic filter options derived from leads dataset (Case-Insensitive Normalization)
+  const getNormalizedUniqueList = (arr) => {
+    const map = {};
+    arr.filter(Boolean).forEach((item) => {
+      const trimmed = String(item).trim();
+      if (!trimmed) return;
+      const key = trimmed.toLowerCase();
+      if (!map[key]) {
+        const formatted =
+          trimmed === trimmed.toLowerCase()
+            ? trimmed.replace(/\b\w/g, (c) => c.toUpperCase())
+            : trimmed;
+        map[key] = formatted;
+      }
+    });
+    return Object.values(map).sort((a, b) => a.localeCompare(b));
+  };
+
+  const uniqueAreaZones = getNormalizedUniqueList(leads.map((l) => l.areaZone));
   const uniqueCampaigns = Array.from(
     new Set(leads.map((l) => l.campaign).filter(Boolean)),
   ).sort();
@@ -906,7 +1015,8 @@ export default function LeadsManager({
     const matchesStatus =
       statusFilter === "All" || lead.status === statusFilter;
     const matchesZone =
-      filters.areaZone === "All" || lead.areaZone === filters.areaZone;
+      filters.areaZone === "All" ||
+      lead.areaZone?.trim().toLowerCase() === filters.areaZone.trim().toLowerCase();
     const matchesCampaign =
       filters.campaign === "All" || lead.campaign === filters.campaign;
     const matchesCreator =
@@ -2273,15 +2383,7 @@ export default function LeadsManager({
                         <div className="grid grid-cols-2 gap-3">
                           {images.map((img, idx) => (
                             <div
-                              key={img.public_id || idx}
-                              onClick={() =>
-                                setImageModal({
-                                  isOpen: true,
-                                  leadName: quickViewLead.name || "Lead",
-                                  images,
-                                  currentIndex: idx,
-                                })
-                              }
+                              key={img._id || img.public_id || idx}
                               className="relative h-28 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 group cursor-pointer shadow-2xs hover:shadow-md transition-all"
                             >
                               <img
@@ -2289,12 +2391,33 @@ export default function LeadsManager({
                                 alt={img.fileName || `Image ${idx + 1}`}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />
-                              <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1 p-2 text-center">
+                              <div
+                                onClick={() =>
+                                  setImageModal({
+                                    isOpen: true,
+                                    leadName: quickViewLead.name || "Lead",
+                                    images,
+                                    currentIndex: idx,
+                                  })
+                                }
+                                className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-1 p-2 text-center"
+                              >
                                 <Eye className="w-5 h-5 drop-shadow-md" />
                                 <span className="text-[10px] font-bold truncate max-w-full px-1">
                                   {img.fileName || "View Full Image"}
                                 </span>
                               </div>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteDocument(quickViewLead.id || quickViewLead._id, img);
+                                }}
+                                className="absolute top-1.5 right-1.5 bg-rose-600/90 hover:bg-rose-600 text-white p-1.5 rounded-lg z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-sm"
+                                title="Delete image from Cloudinary"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
                             </div>
                           ))}
                         </div>
@@ -2353,6 +2476,11 @@ export default function LeadsManager({
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-9999 flex items-center justify-center p-4 animate-fade-in">
             <form
               onSubmit={handleLeadFormSubmit}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && e.target.tagName === "INPUT") {
+                  e.preventDefault();
+                }
+              }}
               className="bg-white rounded-xl shadow-2xl border border-slate-200/80 w-full max-w-3xl overflow-hidden animate-slide-up flex flex-col max-h-[85vh]"
             >
               {/* Modal Header */}
@@ -2394,6 +2522,57 @@ export default function LeadsManager({
                 >
                   <X className="w-4 h-4" />
                 </button>
+              </div>
+
+              {/* Interactive Step Wizard Navigation Tabs */}
+              <div className="bg-slate-100/80 border-b border-slate-200 px-4 py-2 flex items-center justify-between gap-1 overflow-x-auto">
+                {[
+                  { id: "general", label: "General" },
+                  { id: "contact", label: "Contact" },
+                  { id: "financials", label: "Financials" },
+                  { id: "call", label: "Call" },
+                  {
+                    id: "documents",
+                    label: `Documents${leadModal.type === "add" && pendingFiles.length > 0 ? ` (${pendingFiles.length})` : ""}`,
+                  },
+                  { id: "custom", label: "Custom Fields" },
+                ].map((stepTab, idx) => {
+                  const isActive = activeFormTab === stepTab.id;
+                  const isPast = FORM_STEPS.indexOf(stepTab.id) < currentStepIndex;
+                  return (
+                    <button
+                      key={stepTab.id}
+                      type="button"
+                      onClick={() => {
+                        if (activeFormTab === "general" && !formValues.name?.trim()) {
+                          alert("Please enter the Client Name before switching tabs.");
+                          return;
+                        }
+                        if (activeFormTab === "contact" && !formValues.phone?.trim()) {
+                          alert("Please enter the Phone Number before switching tabs.");
+                          return;
+                        }
+                        setActiveFormTab(stepTab.id);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                        isActive
+                          ? "bg-sky-600 text-white shadow-xs"
+                          : isPast
+                            ? "bg-slate-200/70 text-slate-700 hover:bg-slate-200"
+                            : "text-slate-500 hover:bg-slate-200/50 hover:text-slate-700"
+                      }`}
+                    >
+                      <span
+                        className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${
+                          isActive ? "bg-white text-sky-700 font-extrabold" : "bg-slate-300 text-slate-700"
+                        }`}
+                      >
+                        {idx + 1}
+                      </span>
+                      <span>{stepTab.label}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Visual Progress Bar */}
@@ -2958,32 +3137,60 @@ export default function LeadsManager({
                                 doc.fileName || "",
                               ));
                           return (
-                            <a
-                              key={doc.public_id || idx}
-                              href={doc.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex flex-col bg-slate-50 hover:bg-slate-100/90 border border-slate-200 p-3 rounded-2xl transition-all group overflow-hidden"
+                            <div
+                              key={doc._id || doc.public_id || idx}
+                              className="flex flex-col bg-slate-50 border border-slate-200 p-3 rounded-2xl transition-all group overflow-hidden relative"
                             >
                               {isImg ? (
-                                <div className="w-full h-28 rounded-xl bg-slate-200 overflow-hidden mb-2 relative">
+                                <div className="w-full h-28 rounded-xl bg-slate-200 overflow-hidden mb-2 relative group/img">
                                   <img
                                     src={doc.url}
                                     alt={doc.fileName || `Image ${idx + 1}`}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300"
                                   />
-                                  <div className="absolute top-1.5 right-1.5 bg-slate-900/70 backdrop-blur-xs text-white p-1 rounded-md">
-                                    <ImageIcon className="w-3 h-3" />
+                                  <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
+                                    <a
+                                      href={doc.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="bg-slate-900/70 hover:bg-slate-900 backdrop-blur-xs text-white p-1.5 rounded-lg transition-colors cursor-pointer"
+                                      title="Open full image"
+                                    >
+                                      <ExternalLink className="w-3 h-3" />
+                                    </a>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteDocument(leadModal.leadId, doc)}
+                                      className="bg-rose-600/90 hover:bg-rose-600 backdrop-blur-xs text-white p-1.5 rounded-lg transition-colors cursor-pointer"
+                                      title="Delete image from Cloudinary"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </button>
                                   </div>
                                 </div>
                               ) : null}
                               <div className="flex items-center justify-between gap-2 min-w-0">
                                 <div className="flex items-center gap-2 min-w-0">
                                   <Paperclip className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                  <span className="text-xs font-semibold text-slate-700 truncate group-hover:text-sky-600">
+                                  <a
+                                    href={doc.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs font-semibold text-slate-700 truncate hover:text-sky-600"
+                                  >
                                     {doc.fileName || `Document ${idx + 1}`}
-                                  </span>
+                                  </a>
                                 </div>
+                                {!isImg && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteDocument(leadModal.leadId, doc)}
+                                    className="p-1 text-slate-400 hover:text-rose-500 rounded-md hover:bg-rose-50 transition-colors cursor-pointer shrink-0"
+                                    title="Delete document"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
                               </div>
                               <span className="text-[10px] text-slate-400 font-medium mt-1">
                                 {doc.uploadedAt
@@ -2992,7 +3199,7 @@ export default function LeadsManager({
                                     )
                                   : ""}
                               </span>
-                            </a>
+                            </div>
                           );
                         })}
                       </div>
@@ -3149,14 +3356,35 @@ export default function LeadsManager({
                   ) : (
                     <button
                       type="submit"
-                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase rounded-xl shadow-md shadow-emerald-600/20 transition-all cursor-pointer flex items-center gap-1.5"
+                      onClick={() => {
+                        isSubmitButtonClickedRef.current = true;
+                      }}
+                      disabled={isSubmitting || uploadingDoc}
+                      className={`px-5 py-2.5 text-white font-bold text-xs uppercase rounded-xl shadow-md transition-all flex items-center gap-1.5 ${
+                        isSubmitting || uploadingDoc
+                          ? "bg-slate-400 cursor-not-allowed shadow-none"
+                          : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20 cursor-pointer"
+                      }`}
                     >
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>
-                        {leadModal.type === "add"
-                          ? "Create Lead Profile"
-                          : "Save Changes"}
-                      </span>
+                      {isSubmitting || uploadingDoc ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>
+                            {pendingFiles.length > 0
+                              ? "Saving & Uploading..."
+                              : "Saving Lead..."}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>
+                            {leadModal.type === "add"
+                              ? "Create Lead Profile"
+                              : "Save Changes"}
+                          </span>
+                        </>
+                      )}
                     </button>
                   )}
                 </div>
@@ -3171,7 +3399,10 @@ export default function LeadsManager({
         isClient &&
         createPortal(
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-9999 flex items-center justify-center p-4 animate-fade-in">
-            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200/80 w-full max-w-md overflow-hidden animate-scale-up">
+            <form
+              onSubmit={handleSaveColumnSubmit}
+              className="bg-white rounded-2xl shadow-2xl border border-slate-200/80 w-full max-w-md overflow-hidden animate-scale-up"
+            >
               <div className="bg-slate-50 border-b border-slate-100 px-6 py-4 flex justify-between items-center">
                 <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
                   <Layers className="w-4 h-4 text-sky-500" />
@@ -3243,8 +3474,7 @@ export default function LeadsManager({
                     Cancel
                   </button>
                   <button
-                    type="button"
-                    onClick={handleSaveCustomColumn}
+                    type="submit"
                     className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs uppercase rounded-xl shadow-md shadow-sky-600/20 transition-colors cursor-pointer"
                   >
                     {columnModal.mode === "edit"
@@ -3253,7 +3483,7 @@ export default function LeadsManager({
                   </button>
                 </div>
               </div>
-            </div>
+            </form>
           </div>,
           document.body,
         )}

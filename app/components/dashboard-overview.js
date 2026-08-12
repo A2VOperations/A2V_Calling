@@ -213,16 +213,26 @@ export default function DashboardOverview({
   // Daily Outbound Cost mock based on leads
   const dailyCost = 500 + contactedLeads.length * 15;
 
-  // Active Geographies & Zone Breakdown dynamically calculated from backend leads
-  const geoCounts = leads.reduce((acc, l) => {
-    const geo = l.areaZone || "India";
-    acc[geo] = (acc[geo] || 0) + 1;
-    return acc;
-  }, {});
+  // Active Geographies & Zone Breakdown dynamically calculated from backend leads (Case-Insensitive grouping)
+  const geoMap = {};
+  leads.forEach((l) => {
+    const rawGeo = (l.areaZone || "India").trim();
+    if (!rawGeo) return;
+    const key = rawGeo.toLowerCase();
+    if (!geoMap[key]) {
+      const name =
+        rawGeo === rawGeo.toLowerCase()
+          ? rawGeo.replace(/\b\w/g, (c) => c.toUpperCase())
+          : rawGeo;
+      geoMap[key] = { name, count: 0 };
+    }
+    geoMap[key].count += 1;
+  });
 
-  const geoEntries = Object.entries(geoCounts)
-    .sort((a, b) => b[1] - a[1])
+  const geoEntries = Object.values(geoMap)
+    .sort((a, b) => b.count - a.count)
     .slice(0, 5);
+
   const totalLeadsCount = leads.length || 1;
   const flags = {
     "United States": "🇺🇸",
@@ -247,11 +257,11 @@ export default function DashboardOverview({
     "bg-purple-500",
     "bg-rose-500",
   ];
-  let activeGeographies = geoEntries.map(([name, count], idx) => ({
-    country: name,
-    flag: flags[name] || "🌍",
-    calls: count, // Exact count of leads from backend
-    pct: Math.round((count / totalLeadsCount) * 100),
+  let activeGeographies = geoEntries.map((entry, idx) => ({
+    country: entry.name,
+    flag: flags[entry.name] || flags[entry.name.toUpperCase()] || "🌍",
+    calls: entry.count, // Exact count of leads from backend
+    pct: Math.round((entry.count / totalLeadsCount) * 100),
     color: colors[idx % colors.length],
   }));
 

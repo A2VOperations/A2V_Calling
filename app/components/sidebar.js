@@ -165,11 +165,7 @@ const Sidebar = ({
       <div className="flex-1 overflow-y-auto">
         {/* YOUR COMPANY SECTION */}
         <div className="px-2 mb-6">
-          {!isCollapsed && (
-            <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase block mb-2 px-3">
-              Your Company
-            </span>
-          )}
+          
           <nav className="flex flex-col gap-0.5">
             {companyItems.map((item) => {
               const isActive = activeTab === item.id;
