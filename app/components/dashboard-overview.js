@@ -24,9 +24,24 @@ export default function DashboardOverview({
   const [trendPeriod, setTrendPeriod] = React.useState("weekly");
 
   // --- Dynamic Calculations based on leads & users ---
+  const isAdmin = user?.role === "admin";
+  const isUserHandled = (l) => {
+    if (!user) return false;
+    const uId = user.id || user._id;
+    const uName = user.name;
+    const uEmail = user.email;
+    return (
+      (uId && String(l.handledById) === String(uId)) ||
+      (uName && l.handledBy === uName) ||
+      (uEmail && l.handledBy === uEmail)
+    );
+  };
+  const isIncoming = (l) => !l.handledBy || l.status === "Incoming";
+  const visibleLeads = isAdmin ? leads : leads.filter((l) => isIncoming(l) || isUserHandled(l));
+
   const systemUsersCount =
     users && users.length > 0 ? users.length : user ? 1 : 1;
-  const contactedLeads = leads.filter(
+  const contactedLeads = visibleLeads.filter(
     (l) => l.status === "Contacted" || l.status === "Active",
   );
 
@@ -38,7 +53,7 @@ export default function DashboardOverview({
       const dayOrder = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
       const counts = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 };
 
-      leads.forEach((lead) => {
+      visibleLeads.forEach((lead) => {
         const dateStr = lead.leadDate || lead.createdAt;
         if (dateStr) {
           const d = new Date(dateStr);
@@ -78,7 +93,7 @@ export default function DashboardOverview({
       ];
       const counts = Array(12).fill(0);
 
-      leads.forEach((lead) => {
+      visibleLeads.forEach((lead) => {
         const dateStr = lead.leadDate || lead.createdAt;
         if (dateStr) {
           const d = new Date(dateStr);
@@ -101,7 +116,7 @@ export default function DashboardOverview({
       // Aggregate by Quarter (Q1, Q2, Q3, Q4)
       const quarters = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
 
-      leads.forEach((lead) => {
+      visibleLeads.forEach((lead) => {
         const dateStr = lead.leadDate || lead.createdAt;
         if (dateStr) {
           const d = new Date(dateStr);
@@ -130,33 +145,33 @@ export default function DashboardOverview({
   const currentTrendBars = getTrendData();
 
   // Leads created by or assigned to current user
-  const currentUserLeads = leads.filter(
-    (l) => l.createdBy === user?.name || l.createdBy === user?.email,
+  const currentUserLeads = visibleLeads.filter(
+    (l) => l.createdBy === user?.name || l.createdBy === user?.email || isUserHandled(l),
   );
 
   // Incoming unassigned leads
-  const incomingLeads = leads.filter(
+  const incomingLeads = visibleLeads.filter(
     (l) => !l.handledBy || l.status === "Incoming",
   );
 
   // Total Deposits based on leads paid amount data
-  const realPaidTotal = leads.reduce(
+  const realPaidTotal = visibleLeads.reduce(
     (sum, l) => sum + (Number(l.paidAmount) || 0),
     0,
   );
   const totalDeposits =
     realPaidTotal > 0
       ? realPaidTotal
-      : leads.reduce((sum, l) => sum + (l.deposit || 0), 0) +
+      : visibleLeads.reduce((sum, l) => sum + (l.deposit || 0), 0) +
         contactedLeads.length * 450 +
         15000;
 
-  // Financial totals across all leads
-  const totalPaidSum = leads.reduce(
+  // Financial totals across all visible leads
+  const totalPaidSum = visibleLeads.reduce(
     (sum, l) => sum + (Number(l.paidAmount) || 0),
     0,
   );
-  const totalBalanceSum = leads.reduce(
+  const totalBalanceSum = visibleLeads.reduce(
     (sum, l) => sum + (Number(l.balanceAmount) || 0),
     0,
   );
@@ -784,7 +799,7 @@ export default function DashboardOverview({
           </div>
 
           {/* Quarterly Revenue Figures Footer */}
-          <div className="grid grid-cols-4 gap-1 text-center pt-2 border-t border-slate-100">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 text-center pt-2 border-t border-slate-100">
             <div>
               <span className="text-[10px] font-bold text-slate-400 block uppercase">
                 Q1
@@ -990,7 +1005,7 @@ export default function DashboardOverview({
                                   ? "bg-blue-50 text-blue-600 border border-blue-200/60"
                                   : lead.status === "New"
                                     ? "bg-emerald-50 text-emerald-600 border border-emerald-200/60"
-                                    : lead.status === "Follow-up Required"
+                                    : lead.status === "Follow-up"
                                       ? "bg-purple-50 text-purple-600 border border-purple-200/60"
                                       : "bg-slate-50 text-slate-500 border border-slate-200/60"
                             }`}

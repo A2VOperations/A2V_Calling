@@ -65,11 +65,16 @@ export default function ReportsView({ user: currentUser }) {
     setLoading(true);
     setError("");
     try {
+      const userId = loggedInUser?.id || loggedInUser?._id || loggedInUser?.email || "";
       const [usersRes, leadsRes, followUpsRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/users`)
+        fetch(`${API_BASE_URL}/api/users`, {
+          headers: { "x-user-id": userId },
+        })
           .then((res) => res.json())
           .catch(() => ({ success: false })),
-        fetch(`${API_BASE_URL}/api/leads`)
+        fetch(`${API_BASE_URL}/api/leads`, {
+          headers: { "x-user-id": userId },
+        })
           .then((res) => res.json())
           .catch(() => ({ success: false })),
         fetch(`${API_BASE_URL}/api/followups`)
@@ -467,6 +472,10 @@ export default function ReportsView({ user: currentUser }) {
 
   // Export to CSV function
   const exportReportCSV = () => {
+    if (loggedInUser?.role !== "admin") {
+      alert("Only administrators can export report data to CSV.");
+      return;
+    }
     let csvContent = "data:text/csv;charset=utf-8,";
     csvContent +=
       "User Name,Email,Role,Leads Added (Month),Follow-ups Completed (Month),Total Activities (Month),Active Days\n";
@@ -564,14 +573,16 @@ export default function ReportsView({ user: currentUser }) {
             />
           </div>
 
-          {/* Export CSV Button */}
-          <button
-            onClick={exportReportCSV}
-            className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Export CSV</span>
-          </button>
+          {/* Export CSV Button (Admin Only) */}
+          {isAdmin && (
+            <button
+              onClick={exportReportCSV}
+              className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export CSV</span>
+            </button>
+          )}
         </div>
       </div>
 

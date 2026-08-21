@@ -23,6 +23,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Building2,
+  Calendar,
+  Send,
+  Loader2,
+  History,
+  Clock,
+  Plus,
+  RefreshCw,
 } from "lucide-react";
 
 export default function IncomingLeadsView({
@@ -31,7 +38,15 @@ export default function IncomingLeadsView({
   user,
   handleAcceptLead,
 }) {
+  const getCurrentMonthKey = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    return `${year}-${month}`;
+  };
+
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState(() => getCurrentMonthKey());
   const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'table'
   const [sortBy, setSortBy] = useState("newest"); // 'newest' | 'oldest' | 'name'
   const [quickViewLead, setQuickViewLead] = useState(null);
@@ -44,6 +59,58 @@ export default function IncomingLeadsView({
     currentIndex: 0,
   });
 
+  const getLeadMonthKey = (lead) => {
+    const dateStr = lead.leadDate || lead.createdAt;
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      return `${year}-${month}`;
+    }
+    if (typeof dateStr === "string" && dateStr.length >= 7) {
+      const parts = dateStr.split("-");
+      if (parts.length >= 2 && parts[0].length === 4) {
+        return `${parts[0]}-${parts[1].padStart(2, "0")}`;
+      }
+    }
+    return "";
+  };
+
+  const formatMonthLabel = (yearMonthStr) => {
+    if (!yearMonthStr || yearMonthStr === "All") return "All Months";
+    const parts = yearMonthStr.split("-");
+    if (parts.length < 2) return yearMonthStr;
+    const year = parts[0];
+    const month = parts[1];
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    const monthIndex = parseInt(month, 10) - 1;
+    if (monthIndex >= 0 && monthIndex < 12) {
+      return `${monthNames[monthIndex]} ${year}`;
+    }
+    return yearMonthStr;
+  };
+
+  const uniqueMonths = useMemo(() => {
+    const monthsSet = new Set();
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    monthsSet.add(currentMonthKey);
+
+    leads.forEach((l) => {
+      const isUnassigned = !l.handledBy || l.status === "Incoming";
+      if (isUnassigned) {
+        const key = getLeadMonthKey(l);
+        if (key) monthsSet.add(key);
+      }
+    });
+
+    return Array.from(monthsSet).sort().reverse();
+  }, [leads]);
+
   const showToast = (message) => {
     setToast(message);
     setTimeout(() => setToast(null), 3500);
@@ -55,6 +122,11 @@ export default function IncomingLeadsView({
       .filter((l) => {
         const isUnassigned = !l.handledBy || l.status === "Incoming";
         if (!isUnassigned) return false;
+
+        if (selectedMonth !== "All") {
+          const leadMonth = getLeadMonthKey(l);
+          if (leadMonth !== selectedMonth) return false;
+        }
 
         if (!searchQuery.trim()) return true;
         const q = searchQuery.toLowerCase();
@@ -82,7 +154,7 @@ export default function IncomingLeadsView({
           return (a.name || "").localeCompare(b.name || "");
         return 0;
       });
-  }, [leads, searchQuery, sortBy]);
+  }, [leads, searchQuery, selectedMonth, sortBy]);
 
   // Statistics
   const stats = useMemo(() => {
@@ -237,6 +309,23 @@ export default function IncomingLeadsView({
             </button>
           )}
 
+          {/* Month Selector Dropdown */}
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700">
+            <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+            >
+              <option value="All">All Months</option>
+              {uniqueMonths.map((m) => (
+                <option key={m} value={m}>
+                  {formatMonthLabel(m)}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Sort Select */}
           <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700">
             <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -296,7 +385,7 @@ export default function IncomingLeadsView({
         </div>
       ) : viewMode === "grid" ? (
         /* GRID CARD VIEW */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {incomingLeads.map((lead) => {
             const leadId = lead.id || lead._id;
             const isSelected = selectedLeadIds.includes(leadId);
@@ -795,6 +884,148 @@ export default function IncomingLeadsView({
                     </div>
                   );
                 })()}
+
+                {/* Section 7: Activity & Audit History Log */}
+                <div className="space-y-3 pt-3 border-t border-slate-200/80">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-indigo-100/70 rounded-lg text-indigo-700">
+                        <History className="w-4 h-4" />
+                      </div>
+                      <h4 className="font-extrabold text-slate-800 text-xs uppercase tracking-wider">
+                        Activity & Audit History
+                      </h4>
+                    </div>
+                    <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full">
+                      {((quickViewLead.history?.length || 0) + (quickViewLead.forwardHistory?.length || 0))} Entry(s)
+                    </span>
+                  </div>
+
+                  {(() => {
+                    const combinedHistory = [];
+
+                    if (Array.isArray(quickViewLead.history)) {
+                      quickViewLead.history.forEach((h) => {
+                        combinedHistory.push({
+                          id: h._id || Math.random().toString(),
+                          type: h.action || "ACTIVITY",
+                          title: h.action === "CREATED" ? "Lead Created"
+                               : h.action === "FORWARDED" ? "Lead Forwarded"
+                               : h.action === "ACCEPTED" ? "Lead Accepted"
+                               : h.action === "UPDATED" ? "Profile Updated"
+                               : h.action === "DOCUMENT_UPLOADED" ? "Document Uploaded"
+                               : h.action === "DOCUMENT_DELETED" ? "Document Deleted"
+                               : h.action === "SOFT_DELETED" ? "Moved to Recycle Bin"
+                               : h.action === "RESTORED" ? "Restored from Recycle Bin"
+                               : "Lead Activity",
+                          performedBy: h.performedBy || "System",
+                          timestamp: h.timestamp || h.createdAt,
+                          details: h.details,
+                          changes: h.changes,
+                        });
+                      });
+                    }
+
+                    if (Array.isArray(quickViewLead.forwardHistory)) {
+                      quickViewLead.forwardHistory.forEach((fh) => {
+                        const isDuplicate = combinedHistory.some(
+                          (c) => c.type === "FORWARDED" && new Date(c.timestamp).getTime() === new Date(fh.forwardedAt).getTime()
+                        );
+                        if (!isDuplicate) {
+                          combinedHistory.push({
+                            id: fh._id || Math.random().toString(),
+                            type: "FORWARDED",
+                            title: `Forwarded to ${fh.forwardedTo || "Employee"}`,
+                            performedBy: fh.forwardedBy || "System",
+                            timestamp: fh.forwardedAt,
+                            details: fh.remark ? `Note: ${fh.remark}` : `Lead responsibility assigned to ${fh.forwardedTo}`,
+                            changes: { handledBy: { from: "Previous Owner", to: fh.forwardedTo } }
+                          });
+                        }
+                      });
+                    }
+
+                    if (combinedHistory.length === 0) {
+                      combinedHistory.push({
+                        id: "created-fallback",
+                        type: "CREATED",
+                        title: "Lead Created",
+                        performedBy: quickViewLead.createdBy || "System",
+                        timestamp: quickViewLead.createdAt || quickViewLead.leadDate,
+                        details: "Lead created in system",
+                      });
+                    }
+
+                    combinedHistory.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+
+                    return (
+                      <div className="relative pl-5 space-y-3.5 pt-1 before:absolute before:left-2 before:top-2.5 before:bottom-2.5 before:w-0.5 before:bg-slate-200">
+                        {combinedHistory.map((item, idx) => {
+                          const formattedTime = item.timestamp
+                            ? new Date(item.timestamp).toLocaleString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                                hour: "numeric",
+                                minute: "2-digit",
+                                hour12: true,
+                              })
+                            : "Recent";
+
+                          let badgeBg = "bg-slate-100 text-slate-700 border-slate-200";
+                          let icon = <Clock className="w-3 h-3 text-slate-500" />;
+
+                          if (item.type === "FORWARDED") {
+                            badgeBg = "bg-indigo-50 text-indigo-700 border-indigo-200";
+                            icon = <Send className="w-3 h-3 text-indigo-600" />;
+                          } else if (item.type === "CREATED") {
+                            badgeBg = "bg-emerald-50 text-emerald-700 border-emerald-200";
+                            icon = <Plus className="w-3 h-3 text-emerald-600" />;
+                          } else if (item.type === "ACCEPTED") {
+                            badgeBg = "bg-blue-50 text-blue-700 border-blue-200";
+                            icon = <CheckCircle2 className="w-3 h-3 text-blue-600" />;
+                          } else if (item.type === "UPDATED") {
+                            badgeBg = "bg-purple-50 text-purple-700 border-purple-200";
+                            icon = <RefreshCw className="w-3 h-3 text-purple-600" />;
+                          } else if (item.type === "DOCUMENT_UPLOADED" || item.type === "DOCUMENT_DELETED") {
+                            badgeBg = "bg-amber-50 text-amber-700 border-amber-200";
+                            icon = <ImageIcon className="w-3 h-3 text-amber-600" />;
+                          }
+
+                          return (
+                            <div key={item.id || idx} className="relative group">
+                              <div className="absolute -left-[21px] top-1.5 w-3 h-3 rounded-full bg-white border-2 border-indigo-500 group-hover:scale-125 transition-transform" />
+
+                              <div className="bg-slate-50/90 hover:bg-slate-50 border border-slate-200/80 rounded-2xl p-3 text-xs transition-all shadow-2xs">
+                                <div className="flex items-center justify-between gap-2 mb-1">
+                                  <span className={`px-2 py-0.5 text-[10px] font-extrabold rounded-md border inline-flex items-center gap-1 ${badgeBg}`}>
+                                    {icon}
+                                    <span>{item.title}</span>
+                                  </span>
+                                  <span className="text-[10px] font-semibold text-slate-400">
+                                    {formattedTime}
+                                  </span>
+                                </div>
+
+                                {item.details && (
+                                  <p className="text-slate-600 font-medium text-[11px] mt-1 whitespace-pre-wrap">
+                                    {item.details}
+                                  </p>
+                                )}
+
+                                {item.performedBy && (
+                                  <div className="mt-1.5 pt-1.5 border-t border-slate-200/60 flex items-center justify-between text-[10px] text-slate-500 font-semibold">
+                                    <span>Action By: <strong className="text-slate-700">{item.performedBy}</strong></span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
               </div>
 
               {/* Footer Action */}

@@ -23,11 +23,16 @@ export default function UserManagement({ user: currentUser }) {
   const [isCreatingUser, setIsCreatingUser] = useState(false);
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsers(true);
+    // Poll every 10 seconds for real-time online/offline status updates
+    const interval = setInterval(() => {
+      fetchUsers(false);
+    }, 10000);
+    return () => clearInterval(interval);
   }, []);
 
-  const fetchUsers = async () => {
-    setLoading(true);
+  const fetchUsers = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError("");
     try {
       const response = await fetch(`${API_BASE_URL}/api/users`, {
@@ -41,13 +46,13 @@ export default function UserManagement({ user: currentUser }) {
       if (response.ok && res.success) {
         setUsers(res.users);
       } else {
-        setError(res.error || "Failed to fetch users.");
+        if (showLoading) setError(res.error || "Failed to fetch users.");
       }
     } catch (err) {
       console.error(err);
-      setError("Could not connect to the backend server to retrieve users.");
+      if (showLoading) setError("Could not connect to the backend server to retrieve users.");
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -244,9 +249,9 @@ export default function UserManagement({ user: currentUser }) {
   return (
     <div className="flex flex-col gap-6 animate-fade-in relative">
       {/* Page Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
             User Authorization & Management
           </h2>
           <p className="text-xs text-slate-400 font-semibold mt-0.5">
@@ -254,7 +259,7 @@ export default function UserManagement({ user: currentUser }) {
             system access
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={fetchUsers}
             className="px-3.5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-800 font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
@@ -441,6 +446,9 @@ export default function UserManagement({ user: currentUser }) {
                   <th className="p-4 border-r border-slate-100/60">
                     User Identity
                   </th>
+                  <th className="p-4 border-r border-slate-100/60 text-center">
+                    Presence Status
+                  </th>
                   <th className="p-4 border-r border-slate-100/60">
                     Created Date
                   </th>
@@ -459,6 +467,7 @@ export default function UserManagement({ user: currentUser }) {
                   const currentRole = userObj.role;
                   const rowState = updateStates[userObj._id] || "idle";
                   const avatarClass = getAvatarBg(userObj.name || "User");
+                  const isOnline = Boolean(userObj.isOnline);
 
                   return (
                     <tr
@@ -468,10 +477,18 @@ export default function UserManagement({ user: currentUser }) {
                       {/* Column 1: Identity */}
                       <td className="p-4 border-r border-slate-100/60">
                         <div className="flex items-center gap-3">
-                          <div
-                            className={`w-8.5 h-8.5 rounded-full border flex items-center justify-center font-extrabold text-xs uppercase shadow-xs shrink-0 ${avatarClass}`}
-                          >
-                            {(userObj.name || "U").substring(0, 2)}
+                          <div className="relative shrink-0">
+                            <div
+                              className={`w-8.5 h-8.5 rounded-full border flex items-center justify-center font-extrabold text-xs uppercase shadow-xs ${avatarClass}`}
+                            >
+                              {(userObj.name || "U").substring(0, 2)}
+                            </div>
+                            <span
+                              className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white ${
+                                isOnline ? "bg-emerald-500" : "bg-slate-400"
+                              }`}
+                              title={isOnline ? "Online" : "Offline"}
+                            />
                           </div>
                           <div className="flex flex-col">
                             <span className="font-bold text-slate-800 flex items-center gap-1.5">
@@ -487,6 +504,24 @@ export default function UserManagement({ user: currentUser }) {
                             </span>
                           </div>
                         </div>
+                      </td>
+
+                      {/* Column 2: Presence Status */}
+                      <td className="p-4 border-r border-slate-100/60 text-center select-none">
+                        {isOnline ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold tracking-wide uppercase bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            Online
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold tracking-wide uppercase bg-slate-100 text-slate-500 border border-slate-200/80">
+                            <span className="h-2 w-2 rounded-full bg-slate-400"></span>
+                            Offline
+                          </span>
+                        )}
                       </td>
 
                       {/* Column 2: Date */}

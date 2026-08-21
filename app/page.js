@@ -104,7 +104,7 @@ export default function Home() {
         </div>
 
         {/* Login Card */}
-        <div className="w-full bg-white border border-slate-200/80 shadow-xl shadow-slate-100/60 rounded-2xl p-8 flex flex-col justify-between">
+        <div className="w-full bg-white border border-slate-200/80 shadow-xl shadow-slate-100/60 rounded-2xl p-5 sm:p-8 flex flex-col justify-between">
           <div>
             <h2 className="text-xl font-bold text-slate-900 mb-1">Welcome back</h2>
             <p className="text-xs text-slate-500 mb-6 font-semibold">Sign in with your assigned Supabase Auth credentials</p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { API_BASE_URL } from "../../lib/apiConfig";
 import { createPortal } from "react-dom";
 import {
@@ -18,6 +18,7 @@ import {
   Grid,
   List,
   Trash2,
+  RotateCcw,
   Edit3,
   Eye,
   X,
@@ -33,14 +34,17 @@ import {
   Clock,
   AlertCircle,
   XCircle,
-  DollarSign,
   Paperclip,
   UploadCloud,
-  Camera,
   Image as ImageIcon,
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Send,
+  History,
+  FileText,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 
 // Base Standard Columns requested by user
@@ -70,14 +74,7 @@ const BASE_COLUMNS = [
     key: "status",
     label: "Status",
     type: "select",
-    options: [
-      "Incoming",
-      "New",
-      "Active",
-      "Contacted",
-      "Follow-up Required",
-      "No Answer",
-    ],
+    options: ["New", "Active", "Contacted", "Follow-up", "No Answer"],
   },
   { key: "campaign", label: "Source Campaign", type: "text" },
 ];
@@ -95,7 +92,10 @@ export default function LeadsManager({
   leads = [],
   setLeads,
   user,
+  users = [],
   handleAcceptLead,
+  handleForwardLead,
+  handleForwardBulkLeads,
   initialFilter = "all",
 }) {
   const [uploadingDoc, setUploadingDoc] = useState(false);
@@ -114,10 +114,27 @@ export default function LeadsManager({
   const [customColumns, setCustomColumns] = useState([]);
   const [isClient, setIsClient] = useState(false);
 
+  const getCurrentMonthKey = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    return `${year}-${month}`;
+  };
+
   // Search and filter states
-  const [quickFilterTab, setQuickFilterTab] = useState(initialFilter); // 'all', 'incoming', 'my-handled'
+  const [quickFilterTab] = useState(initialFilter); // 'all', 'incoming', 'my-handled'
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+
+  // Toast Notification state
+  const [toast, setToast] = useState(null);
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+  const [selectedMonth, setSelectedMonth] = useState(() =>
+    getCurrentMonthKey(),
+  );
   const [filters, setFilters] = useState({
     areaZone: "All",
     campaign: "All",
@@ -128,6 +145,98 @@ export default function LeadsManager({
     dateTo: "",
   });
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+
+  // Recycle Bin (Soft Delete) state & effect
+  const [recycledLeads, setRecycledLeads] = useState([]);
+  const [loadingRecycled, setLoadingRecycled] = useState(false);
+
+  const fetchRecycledLeads = async () => {
+    if (user?.role !== "admin") return;
+    setLoadingRecycled(true);
+    try {
+      const currentUser =
+        user ||
+        (typeof window !== "undefined"
+          ? JSON.parse(localStorage.getItem("user"))
+          : null);
+      const userId =
+        currentUser?.id || currentUser?._id || currentUser?.email || "";
+      const res = await fetch(`${API_BASE_URL}/api/leads/recycled`, {
+        headers: { "x-user-id": userId },
+      });
+      const contentType = res.headers.get("content-type");
+      if (
+        !res.ok ||
+        !contentType ||
+        !contentType.includes("application/json")
+      ) {
+        console.warn(
+          "Recycle Bin API returned non-JSON or status:",
+          res.status,
+        );
+        return;
+      }
+      const data = await res.json();
+      if (data.success) {
+        setRecycledLeads(data.leads.map((l) => ({ ...l, id: l._id })));
+      }
+    } catch (err) {
+      console.error("Error fetching recycled leads:", err);
+    } finally {
+      setLoadingRecycled(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.role === "admin") {
+      fetchRecycledLeads();
+    }
+  }, [user]);
+
+  const getLeadMonthKey = (lead) => {
+    const dateStr = lead.leadDate || lead.createdAt;
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      return `${year}-${month}`;
+    }
+    if (typeof dateStr === "string" && dateStr.length >= 7) {
+      const parts = dateStr.split("-");
+      if (parts.length >= 2 && parts[0].length === 4) {
+        return `${parts[0]}-${parts[1].padStart(2, "0")}`;
+      }
+    }
+    return "";
+  };
+
+  const formatMonthLabel = (yearMonthStr) => {
+    if (!yearMonthStr || yearMonthStr === "All") return "All Months";
+    const parts = yearMonthStr.split("-");
+    if (parts.length < 2) return yearMonthStr;
+    const year = parts[0];
+    const month = parts[1];
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    const monthIndex = parseInt(month, 10) - 1;
+    if (monthIndex >= 0 && monthIndex < 12) {
+      return `${monthNames[monthIndex]} ${year}`;
+    }
+    return yearMonthStr;
+  };
 
   // Modal control states
   const [leadModal, setLeadModal] = useState({
@@ -141,6 +250,267 @@ export default function LeadsManager({
     editingKey: null,
   });
   const [quickViewLead, setQuickViewLead] = useState(null); // Drawer / Quick View state
+
+  // Forward Lead Modal & Multi-Selection state
+  const [selectedLeadIds, setSelectedLeadIds] = useState([]);
+  const [forwardModal, setForwardModal] = useState({
+    isOpen: false,
+    leadsToForward: [],
+    targetUserId: "",
+    remark: "",
+    isSubmitting: false,
+  });
+
+  const handleOpenForwardModal = (leadOrLeads) => {
+    const list = Array.isArray(leadOrLeads) ? leadOrLeads : [leadOrLeads];
+    if (list.length === 0) return;
+    setForwardModal({
+      isOpen: true,
+      leadsToForward: list,
+      targetUserId: "",
+      remark: "",
+      isSubmitting: false,
+    });
+  };
+
+  const handleCloseForwardModal = () => {
+    setForwardModal({
+      isOpen: false,
+      leadsToForward: [],
+      targetUserId: "",
+      remark: "",
+      isSubmitting: false,
+    });
+  };
+
+  const handleConfirmForward = async () => {
+    if (!forwardModal.targetUserId) {
+      showToast("Please select an employee to forward to.");
+      return;
+    }
+    const targetUser = (users || []).find(
+      (u) =>
+        String(u._id || u.id || u.email) ===
+          String(forwardModal.targetUserId) ||
+        (u.email &&
+          u.email.toLowerCase() ===
+            String(forwardModal.targetUserId).toLowerCase()),
+    );
+    if (!targetUser) {
+      showToast("Selected employee not found.");
+      return;
+    }
+
+    setForwardModal((prev) => ({ ...prev, isSubmitting: true }));
+
+    if (forwardModal.leadsToForward.length === 1) {
+      const targetLead = forwardModal.leadsToForward[0];
+      const leadId = targetLead.id || targetLead._id;
+      if (handleForwardLead) {
+        const res = await handleForwardLead(
+          leadId,
+          targetUser,
+          forwardModal.remark,
+        );
+        if (res?.success) {
+          showToast(
+            `🎉 Lead forwarded to ${targetUser.name || targetUser.email}!`,
+          );
+          setSelectedLeadIds((prev) => prev.filter((id) => id !== leadId));
+          if (
+            quickViewLead &&
+            (quickViewLead.id === leadId || quickViewLead._id === leadId)
+          ) {
+            setQuickViewLead(
+              res.lead || {
+                ...quickViewLead,
+                handledBy: targetUser.name || targetUser.email,
+                handledById: targetUser._id || targetUser.id,
+              },
+            );
+          }
+        }
+      }
+    } else if (forwardModal.leadsToForward.length > 1) {
+      const leadIds = forwardModal.leadsToForward.map((l) => l.id || l._id);
+      if (handleForwardBulkLeads) {
+        const res = await handleForwardBulkLeads(
+          leadIds,
+          targetUser,
+          forwardModal.remark,
+        );
+        if (res?.success) {
+          showToast(
+            `🎉 ${leadIds.length} leads forwarded to ${targetUser.name || targetUser.email}!`,
+          );
+          setSelectedLeadIds([]);
+        }
+      }
+    }
+
+    handleCloseForwardModal();
+  };
+
+  const handleToggleSelectLead = (leadId) => {
+    setSelectedLeadIds((prev) =>
+      prev.includes(leadId)
+        ? prev.filter((id) => id !== leadId)
+        : [...prev, leadId],
+    );
+  };
+
+  const handleSelectAllLeads = () => {
+    if (selectedLeadIds.length === filteredLeads.length) {
+      setSelectedLeadIds([]);
+    } else {
+      setSelectedLeadIds(filteredLeads.map((l) => l.id || l._id));
+    }
+  };
+
+  // Schedule Follow-Up State & Handlers
+  const [scheduleFollowUpModal, setScheduleFollowUpModal] = useState({
+    isOpen: false,
+    lead: null,
+    scheduledAt: "",
+    description: "",
+    isSubmitting: false,
+  });
+
+  const handleOpenScheduleFollowUp = (lead) => {
+    const defaultDate = new Date();
+    defaultDate.setHours(defaultDate.getHours() + 1);
+    defaultDate.setMinutes(0, 0, 0);
+    const pad = (n) => String(n).padStart(2, "0");
+    const formattedDefault = `${defaultDate.getFullYear()}-${pad(defaultDate.getMonth() + 1)}-${pad(defaultDate.getDate())}T${pad(defaultDate.getHours())}:${pad(defaultDate.getMinutes())}`;
+
+    setScheduleFollowUpModal({
+      isOpen: true,
+      lead,
+      scheduledAt: formattedDefault,
+      description: `Follow-up call with ${lead.name || "Client"}`,
+      isSubmitting: false,
+    });
+  };
+
+  const handleCloseScheduleFollowUp = () => {
+    setScheduleFollowUpModal({
+      isOpen: false,
+      lead: null,
+      scheduledAt: "",
+      description: "",
+      isSubmitting: false,
+    });
+  };
+
+  const handleConfirmScheduleFollowUp = async () => {
+    const { lead, scheduledAt, description } = scheduleFollowUpModal;
+    if (!lead || !scheduledAt) {
+      showToast("Please select a valid date & time.");
+      return;
+    }
+
+    setScheduleFollowUpModal((prev) => ({ ...prev, isSubmitting: true }));
+
+    try {
+      const creatorName = user?.name || user?.email || "Agent";
+      const creatorId = user?.id || user?._id || "";
+      const payload = {
+        leadId: lead.id || lead._id,
+        leadName: lead.name,
+        phoneNumber: lead.phone || "",
+        description: description || `Follow-up call with ${lead.name}`,
+        scheduledAt: new Date(scheduledAt).toISOString(),
+        status: "Pending",
+        createdBy: creatorName,
+        createdById: creatorId,
+      };
+
+      const response = await fetch(`${API_BASE_URL}/api/followups`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": user?.id || user?._id || user?.email || "",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        showToast(`📅 Follow-up scheduled for ${lead.name}!`);
+
+        const leadId = lead.id || lead._id;
+        const formattedDate = new Date(scheduledAt).toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+
+        const historyDetail = `Scheduled follow-up for ${formattedDate}: ${description || "Call client"}`;
+
+        await fetch(`${API_BASE_URL}/api/leads/${leadId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "x-user-id": user?.id || user?._id || user?.email || "",
+          },
+          body: JSON.stringify({
+            updatedBy: creatorName,
+            user,
+            remark: lead.remark
+              ? `${lead.remark}\n[Scheduled Follow-up for ${formattedDate}]: ${description}`
+              : `[Scheduled Follow-up for ${formattedDate}]: ${description}`,
+          }),
+        });
+
+        setLeads((prevLeads) =>
+          prevLeads.map((l) => {
+            if ((l.id || l._id) === leadId) {
+              const updatedHistory = l.history ? [...l.history] : [];
+              updatedHistory.push({
+                action: "FOLLOWUP_SCHEDULED",
+                performedBy: creatorName,
+                timestamp: new Date(),
+                details: historyDetail,
+              });
+              return { ...l, history: updatedHistory };
+            }
+            return l;
+          }),
+        );
+
+        if (
+          quickViewLead &&
+          (quickViewLead.id === leadId || quickViewLead._id === leadId)
+        ) {
+          setQuickViewLead((prev) => ({
+            ...prev,
+            history: [
+              ...(prev.history || []),
+              {
+                action: "FOLLOWUP_SCHEDULED",
+                performedBy: creatorName,
+                timestamp: new Date(),
+                details: historyDetail,
+              },
+            ],
+          }));
+        }
+
+        handleCloseScheduleFollowUp();
+      } else {
+        showToast(data.error || "Failed to schedule follow-up", "error");
+        setScheduleFollowUpModal((prev) => ({ ...prev, isSubmitting: false }));
+      }
+    } catch (err) {
+      console.error("Error scheduling follow-up:", err);
+      showToast("Could not connect to server", "error");
+      setScheduleFollowUpModal((prev) => ({ ...prev, isSubmitting: false }));
+    }
+  };
 
   // Column Visibility state
   const [isColumnDropdownOpen, setIsColumnDropdownOpen] = useState(false);
@@ -197,6 +567,18 @@ export default function LeadsManager({
       setPendingFiles((prev) => [...prev, ...newPending]);
       e.target.value = "";
     } else {
+      const targetLeadId =
+        leadModal.leadId ||
+        formValues.id ||
+        formValues._id ||
+        quickViewLead?.id ||
+        quickViewLead?._id;
+
+      if (!targetLeadId) {
+        alert("Cannot determine lead ID for file upload.");
+        return;
+      }
+
       for (const file of files) {
         const data = new FormData();
         data.append("document", file);
@@ -204,7 +586,7 @@ export default function LeadsManager({
         setUploadingDoc(true);
         try {
           const response = await fetch(
-            `${API_BASE_URL}/api/leads/${leadModal.leadId}/documents`,
+            `${API_BASE_URL}/api/leads/${targetLeadId}/documents`,
             {
               method: "POST",
               body: data,
@@ -215,17 +597,41 @@ export default function LeadsManager({
             setFormValues((prev) => ({
               ...prev,
               documents: result.documents,
+              leadImage: result.leadImage || prev.leadImage,
             }));
             setLeads((prev) =>
-              prev.map((l) =>
-                l.id === leadModal.leadId
-                  ? { ...l, documents: result.documents }
-                  : l,
-              ),
+              prev.map((l) => {
+                const lId = l.id || l._id;
+                return String(lId) === String(targetLeadId)
+                  ? {
+                      ...l,
+                      documents: result.documents,
+                      leadImage: result.leadImage || l.leadImage,
+                    }
+                  : l;
+              }),
             );
+            if (
+              quickViewLead &&
+              String(quickViewLead.id || quickViewLead._id) ===
+                String(targetLeadId)
+            ) {
+              setQuickViewLead((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      documents: result.documents,
+                      leadImage: result.leadImage || prev.leadImage,
+                    }
+                  : null,
+              );
+            }
+          } else {
+            alert("Upload failed: " + (result.message || "Unknown error"));
           }
         } catch (err) {
           console.error("Error uploading document:", err);
+          alert("Error uploading document");
         } finally {
           setUploadingDoc(false);
           e.target.value = "";
@@ -238,8 +644,16 @@ export default function LeadsManager({
     setPendingFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleDeleteDocument = async (leadId, docObj) => {
-    if (!leadId) return;
+  const handleDeleteDocument = async (leadIdOrObj, docObj) => {
+    const targetLeadId =
+      typeof leadIdOrObj === "string"
+        ? leadIdOrObj
+        : leadIdOrObj?.id ||
+          leadIdOrObj?._id ||
+          quickViewLead?.id ||
+          quickViewLead?._id;
+
+    if (!targetLeadId) return;
     const identifier = docObj._id || docObj.public_id;
     if (!identifier) return;
 
@@ -254,12 +668,12 @@ export default function LeadsManager({
     setUploadingDoc(true);
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/leads/${leadId}/documents/${encodeURIComponent(identifier)}`,
+        `${API_BASE_URL}/api/leads/${targetLeadId}/documents/${encodeURIComponent(identifier)}`,
         { method: "DELETE" },
       );
       const data = await response.json();
       if (data.success) {
-        if (leadModal.leadId === leadId) {
+        if (String(leadModal.leadId) === String(targetLeadId)) {
           setFormValues((prev) => ({
             ...prev,
             documents: data.documents,
@@ -267,16 +681,24 @@ export default function LeadsManager({
           }));
         }
         setLeads((prev) =>
-          prev.map((l) =>
-            l.id === leadId
+          prev.map((l) => {
+            const lId = l.id || l._id;
+            return String(lId) === String(targetLeadId)
               ? { ...l, documents: data.documents, leadImage: data.leadImage }
-              : l,
-          ),
+              : l;
+          }),
         );
-        if (quickViewLead?.id === leadId) {
+        if (
+          quickViewLead &&
+          String(quickViewLead.id || quickViewLead._id) === String(targetLeadId)
+        ) {
           setQuickViewLead((prev) =>
             prev
-              ? { ...prev, documents: data.documents, leadImage: data.leadImage }
+              ? {
+                  ...prev,
+                  documents: data.documents,
+                  leadImage: data.leadImage,
+                }
               : null,
           );
         }
@@ -349,20 +771,39 @@ export default function LeadsManager({
     (c) => !hiddenColumnKeys.includes(c.key),
   );
 
-  // Count leads by status
-  const counts = {
-    total: leads.length,
-    incoming: leads.filter((l) => !l.handledBy || l.status === "Incoming")
-      .length,
-    myHandled: leads.filter(
-      (l) => l.handledBy === user?.name || l.handledBy === user?.email,
-    ).length,
-    new: leads.filter((l) => l.status === "New").length,
-    active: leads.filter((l) => l.status === "Active").length,
-    contacted: leads.filter((l) => l.status === "Contacted").length,
-    followUp: leads.filter((l) => l.status === "Follow-up Required").length,
-    noAnswer: leads.filter((l) => l.status === "No Answer").length,
+  // Role-based visibility helpers
+  const isAdmin = user?.role === "admin";
+  const isUserHandled = (lead) => {
+    if (!user) return false;
+    const uId = user.id || user._id;
+    const uName = user.name;
+    const uEmail = user.email;
+    return (
+      (uId && String(lead.handledById) === String(uId)) ||
+      (uName && lead.handledBy === uName) ||
+      (uEmail && lead.handledBy === uEmail)
+    );
   };
+  const isIncomingLead = (lead) => {
+    if (!lead) return false;
+    const hasHandler = Boolean(
+      (lead.handledBy && lead.handledBy.trim()) ||
+      (lead.handledById && String(lead.handledById).trim()),
+    );
+    const isIncomingStatus =
+      String(lead.status || "")
+        .trim()
+        .toLowerCase() === "incoming";
+    return !hasHandler || isIncomingStatus;
+  };
+  const isVisibleToUser = (lead) => {
+    if (isAdmin) return true;
+    return isUserHandled(lead);
+  };
+
+  const visibleLeads = leads.filter(
+    (l) => isVisibleToUser(l) && !isIncomingLead(l),
+  );
 
   // Toggle column visibility
   const toggleColumnVisibility = (key) => {
@@ -386,6 +827,10 @@ export default function LeadsManager({
 
   // Export to CSV
   const handleExportCSV = () => {
+    if (user?.role !== "admin") {
+      alert("Only administrators can export leads to CSV.");
+      return;
+    }
     if (filteredLeads.length === 0) {
       alert("No leads available to export.");
       return;
@@ -490,9 +935,9 @@ export default function LeadsManager({
       styles =
         "bg-emerald-50 text-emerald-700 border-emerald-200/70 ring-1 ring-emerald-500/10";
       Icon = Sparkles;
-    } else if (status === "Follow-up Required") {
+    } else if (status === "Follow-up Required" || status === "Follow-up") {
       styles =
-        "bg-purple-50 text-purple-700 border-purple-200/70 ring-1 ring-purple-500/10";
+        "bg-purple-50 text-purple-700 text-center border-purple-200/70 ring-1 ring-purple-500/10";
       Icon = AlertCircle;
     } else if (status === "No Answer") {
       styles =
@@ -500,12 +945,15 @@ export default function LeadsManager({
       Icon = XCircle;
     }
 
+    const displayStatus =
+      status === "Follow-up Required" ? "Follow-up" : status || "Incoming";
+
     return (
       <span
         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all ${styles}`}
       >
         <Icon className="w-3 h-3 shrink-0" />
-        <span>{status || "Incoming"}</span>
+        <span>{displayStatus}</span>
       </span>
     );
   };
@@ -684,6 +1132,8 @@ export default function LeadsManager({
       progress: 10,
       leadDate: new Date().toISOString().split("T")[0],
       createdBy: currentUser?.name || currentUser?.email || "",
+      handledBy: currentUser?.name || currentUser?.email || "",
+      handledById: currentUser?.id || currentUser?._id || "",
       totalAmount: "",
       paidAmount: "",
       balanceAmount: "",
@@ -694,28 +1144,135 @@ export default function LeadsManager({
   };
 
   const handleOpenEditLead = (lead) => {
-    setFormValues({ ...lead });
-    setLeadModal({ isOpen: true, type: "edit", leadId: lead.id });
+    const targetId = lead.id || lead._id;
+    setFormValues({ ...lead, id: targetId });
+    setLeadModal({ isOpen: true, type: "edit", leadId: targetId });
     setActiveFormTab("general");
   };
 
-  // Delete lead handler
+  // Soft Delete lead handler (moves to Recycle Bin)
   const handleDeleteLead = async (id, name) => {
-    if (window.confirm(`Are you sure you want to delete lead: "${name}"?`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete lead: "${name}"? It will be moved to the Recycle Bin.`,
+      )
+    ) {
       try {
+        const currentUser =
+          user ||
+          (typeof window !== "undefined"
+            ? JSON.parse(localStorage.getItem("user"))
+            : null);
+        const userId =
+          currentUser?.id || currentUser?._id || currentUser?.email || "";
         const response = await fetch(`${API_BASE_URL}/api/leads/${id}`, {
           method: "DELETE",
+          headers: { "x-user-id": userId },
         });
         const data = await response.json();
         if (data.success) {
-          setLeads((prev) => prev.filter((l) => l.id !== id));
-          if (quickViewLead?.id === id) setQuickViewLead(null);
+          setLeads((prev) => prev.filter((l) => (l.id || l._id) !== id));
+          if (quickViewLead?.id === id || quickViewLead?._id === id)
+            setQuickViewLead(null);
+          if (user?.role === "admin") fetchRecycledLeads();
         } else {
           alert("Failed to delete lead: " + (data.error || "Unknown error"));
         }
       } catch (err) {
         console.error("Error deleting lead:", err);
         alert("Error deleting lead");
+      }
+    }
+  };
+
+  // Restore lead handler (Admin only)
+  const handleRestoreLead = async (id, name) => {
+    try {
+      const currentUser =
+        user ||
+        (typeof window !== "undefined"
+          ? JSON.parse(localStorage.getItem("user"))
+          : null);
+      const userId =
+        currentUser?.id || currentUser?._id || currentUser?.email || "";
+      const res = await fetch(`${API_BASE_URL}/api/leads/${id}/restore`, {
+        method: "PUT",
+        headers: { "x-user-id": userId },
+      });
+      const contentType = res.headers.get("content-type");
+      if (
+        !res.ok ||
+        !contentType ||
+        !contentType.includes("application/json")
+      ) {
+        alert(
+          "Server returned error or invalid response. Status: " + res.status,
+        );
+        return;
+      }
+      const data = await res.json();
+      if (data.success) {
+        setRecycledLeads((prev) => prev.filter((l) => (l.id || l._id) !== id));
+        if (data.lead) {
+          const restored = { ...data.lead, id: data.lead._id };
+          setLeads((prev) => [
+            restored,
+            ...prev.filter((l) => (l.id || l._id) !== id),
+          ]);
+        }
+      } else {
+        alert("Failed to restore lead: " + (data.error || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Error restoring lead:", err);
+      alert("Error restoring lead");
+    }
+  };
+
+  // Permanent Delete lead handler (Admin only)
+  const handlePermanentDeleteLead = async (id, name) => {
+    if (
+      window.confirm(
+        `PERMANENT DELETE WARNING: Are you sure you want to permanently delete lead "${name}"? This action CANNOT be undone and attached files will be deleted from Cloudinary.`,
+      )
+    ) {
+      try {
+        const currentUser =
+          user ||
+          (typeof window !== "undefined"
+            ? JSON.parse(localStorage.getItem("user"))
+            : null);
+        const userId =
+          currentUser?.id || currentUser?._id || currentUser?.email || "";
+        const res = await fetch(`${API_BASE_URL}/api/leads/${id}/permanent`, {
+          method: "DELETE",
+          headers: { "x-user-id": userId },
+        });
+        const contentType = res.headers.get("content-type");
+        if (
+          !res.ok ||
+          !contentType ||
+          !contentType.includes("application/json")
+        ) {
+          alert(
+            "Server returned error or invalid response. Status: " + res.status,
+          );
+          return;
+        }
+        const data = await res.json();
+        if (data.success) {
+          setRecycledLeads((prev) =>
+            prev.filter((l) => (l.id || l._id) !== id),
+          );
+        } else {
+          alert(
+            "Failed to permanently delete lead: " +
+              (data.error || "Unknown error"),
+          );
+        }
+      } catch (err) {
+        console.error("Error permanently deleting lead:", err);
+        alert("Error permanently deleting lead");
       }
     }
   };
@@ -757,7 +1314,7 @@ export default function LeadsManager({
         ? 80
         : formValues.status === "Contacted"
           ? 45
-          : formValues.status === "Follow-up Required"
+          : formValues.status === "Follow-up Required" || formValues.status === "Follow-up"
             ? 60
             : formValues.status === "No Answer"
               ? 0
@@ -796,12 +1353,17 @@ export default function LeadsManager({
             let updatedDocs = createdLead.documents || [];
             let uploadFailed = false;
 
+            const targetId =
+              createdLead.id ||
+              createdLead._id ||
+              data.lead?._id ||
+              data.lead?.id;
             for (const item of pendingFiles) {
               const fileData = new FormData();
               fileData.append("document", item.file);
               try {
                 const docRes = await fetch(
-                  `${API_BASE_URL}/api/leads/${createdLead.id}/documents`,
+                  `${API_BASE_URL}/api/leads/${targetId}/documents`,
                   {
                     method: "POST",
                     body: fileData,
@@ -817,7 +1379,10 @@ export default function LeadsManager({
                   }
                 } else {
                   uploadFailed = true;
-                  console.error("Error uploading pending file:", docData.message);
+                  console.error(
+                    "Error uploading pending file:",
+                    docData.message,
+                  );
                 }
               } catch (err) {
                 uploadFailed = true;
@@ -828,7 +1393,9 @@ export default function LeadsManager({
             setUploadingDoc(false);
 
             if (uploadFailed) {
-              alert("Lead created, but one or more attached images failed to upload. You can re-upload them from Documents tab.");
+              alert(
+                "Lead created, but one or more attached images failed to upload. You can re-upload them from Documents tab.",
+              );
             }
           }
 
@@ -944,16 +1511,29 @@ export default function LeadsManager({
     return Object.values(map).sort((a, b) => a.localeCompare(b));
   };
 
-  const uniqueAreaZones = getNormalizedUniqueList(leads.map((l) => l.areaZone));
+  const uniqueAreaZones = getNormalizedUniqueList(
+    visibleLeads.map((l) => l.areaZone),
+  );
   const uniqueCampaigns = Array.from(
-    new Set(leads.map((l) => l.campaign).filter(Boolean)),
-  ).sort();
-  const uniqueCreators = Array.from(
-    new Set(leads.map((l) => l.createdBy).filter(Boolean)),
+    new Set(visibleLeads.map((l) => l.campaign).filter(Boolean)),
   ).sort();
   const uniqueHandlers = Array.from(
-    new Set(leads.map((l) => l.handledBy).filter(Boolean)),
+    new Set(visibleLeads.map((l) => l.handledBy).filter(Boolean)),
   ).sort();
+
+  const uniqueMonths = useMemo(() => {
+    const monthsSet = new Set();
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    monthsSet.add(currentMonthKey);
+
+    visibleLeads.forEach((l) => {
+      const key = getLeadMonthKey(l);
+      if (key) monthsSet.add(key);
+    });
+
+    return Array.from(monthsSet).sort().reverse();
+  }, [visibleLeads]);
 
   const activeFiltersCount =
     (statusFilter !== "All" ? 1 : 0) +
@@ -967,6 +1547,7 @@ export default function LeadsManager({
 
   const resetAllFilters = () => {
     setStatusFilter("All");
+    setSelectedMonth("All");
     setFilters({
       areaZone: "All",
       campaign: "All",
@@ -980,15 +1561,21 @@ export default function LeadsManager({
 
   // Filter and search logic
   let filteredLeads = leads.filter((lead) => {
+    // Exclude incoming leads from main Leads Management section
+    if (isIncomingLead(lead)) {
+      return false;
+    }
+
+    // Role-based security check: employees can only see own handled leads
+    if (!isVisibleToUser(lead)) {
+      return false;
+    }
+
     // Quick filter tab criteria
     if (quickFilterTab === "incoming" && lead.handledBy) {
       return false;
     }
-    if (
-      quickFilterTab === "my-handled" &&
-      lead.handledBy !== user?.name &&
-      lead.handledBy !== user?.email
-    ) {
+    if (quickFilterTab === "my-handled" && !isUserHandled(lead)) {
       return false;
     }
 
@@ -1013,10 +1600,15 @@ export default function LeadsManager({
       createdByMatch ||
       handledByMatch;
     const matchesStatus =
-      statusFilter === "All" || lead.status === statusFilter;
+      statusFilter === "All" ||
+      lead.status === statusFilter ||
+      (statusFilter === "Follow-up" && lead.status === "Follow-up Required");
+    const matchesMonth =
+      selectedMonth === "All" || getLeadMonthKey(lead) === selectedMonth;
     const matchesZone =
       filters.areaZone === "All" ||
-      lead.areaZone?.trim().toLowerCase() === filters.areaZone.trim().toLowerCase();
+      lead.areaZone?.trim().toLowerCase() ===
+        filters.areaZone.trim().toLowerCase();
     const matchesCampaign =
       filters.campaign === "All" || lead.campaign === filters.campaign;
     const matchesCreator =
@@ -1051,6 +1643,7 @@ export default function LeadsManager({
     return (
       matchesSearch &&
       matchesStatus &&
+      matchesMonth &&
       matchesZone &&
       matchesCampaign &&
       matchesCreator &&
@@ -1073,23 +1666,6 @@ export default function LeadsManager({
       return 0;
     });
   }
-
-  // Financial Summaries calculation
-  const totalPaidSum = filteredLeads.reduce(
-    (sum, l) => sum + (Number(l.paidAmount) || 0),
-    0,
-  );
-  const totalBalanceSum = filteredLeads.reduce(
-    (sum, l) => sum + (Number(l.balanceAmount) || 0),
-    0,
-  );
-  const totalDealSum = filteredLeads.reduce(
-    (sum, l) =>
-      sum +
-      (Number(l.totalAmount) ||
-        (Number(l.paidAmount) || 0) + (Number(l.balanceAmount) || 0)),
-    0,
-  );
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in relative">
@@ -1115,14 +1691,16 @@ export default function LeadsManager({
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
-          <button
-            onClick={handleExportCSV}
-            className="px-3.5 py-2 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-2xs"
-            title="Export lead list to CSV file"
-          >
-            <Download className="w-4 h-4 text-slate-500" />
-            <span>Export CSV</span>
-          </button>
+          {user?.role === "admin" && (
+            <button
+              onClick={handleExportCSV}
+              className="px-3.5 py-2 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-2xs"
+              title="Export lead list to CSV file"
+            >
+              <Download className="w-4 h-4 text-slate-500" />
+              <span>Export CSV</span>
+            </button>
+          )}
           <button
             onClick={handleOpenAddColumn}
             className="px-3.5 py-2 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-2xs"
@@ -1139,60 +1717,6 @@ export default function LeadsManager({
             <span>Add New Lead</span>
           </button>
         </div>
-      </div>
-
-      {/* Quick Category Tab Switcher Bar */}
-      <div className="bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/80 flex items-center gap-2 shadow-2xs overflow-x-auto">
-        <button
-          onClick={() => setQuickFilterTab("all")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
-            quickFilterTab === "all"
-              ? "bg-white text-sky-700 shadow-sm ring-1 ring-slate-200/80"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
-          }`}
-        >
-          <Layers className="w-4 h-4 text-sky-600" />
-          <span>All Leads Directory</span>
-          <span className="bg-slate-100 text-slate-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
-            {counts.total}
-          </span>
-        </button>
-
-        <button
-          onClick={() => setQuickFilterTab("incoming")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
-            quickFilterTab === "incoming"
-              ? "bg-blue-500 text-white shadow-md shadow-blue-500/20"
-              : "text-blue-800 bg-blue-50/80 hover:bg-blue-100 border border-blue-200/80"
-          }`}
-        >
-          <Sparkles className="w-4 h-4" />
-          <span>Incoming Leads (Unassigned)</span>
-          <span
-            className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-              quickFilterTab === "incoming"
-                ? "bg-blue-600 text-white"
-                : "bg-blue-200/80 text-blue-900"
-            }`}
-          >
-            {counts.incoming}
-          </span>
-        </button>
-
-        <button
-          onClick={() => setQuickFilterTab("my-handled")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
-            quickFilterTab === "my-handled"
-              ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
-          }`}
-        >
-          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-          <span>My Handled Leads</span>
-          <span className="bg-slate-100 text-slate-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
-            {counts.myHandled}
-          </span>
-        </button>
       </div>
 
       {/* Filter, Search & View Controls Bar */}
@@ -1217,58 +1741,25 @@ export default function LeadsManager({
           )}
         </div>
 
-        {/* Status Filter Quick Pills (Right after Search) */}
-        <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 max-w-full">
-          {[
-            { label: "All", count: counts.all, status: "all" },
-            { label: "New", count: counts.new, status: "New", icon: Sparkles },
-            {
-              label: "Active",
-              count: counts.active,
-              status: "Active",
-              icon: CheckCircle2,
-            },
-            {
-              label: "Contacted",
-              count: counts.contacted,
-              status: "Contacted",
-              icon: Clock,
-            },
-            {
-              label: "Follow-up",
-              count: counts.followUp,
-              status: "Follow-up Required",
-              icon: AlertCircle,
-            },
-          ].map((pill) => {
-            const isActive = statusFilter === pill.status;
-            return (
-              <button
-                key={pill.label}
-                onClick={() => setStatusFilter(pill.status)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                  isActive
-                    ? "bg-slate-900 text-white shadow-xs"
-                    : "bg-slate-100/90 text-slate-600 hover:bg-slate-200/70 hover:text-slate-900"
-                }`}
-              >
-                <span>{pill.label}</span>
-                <span
-                  className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded-full ${
-                    isActive
-                      ? "bg-white/20 text-white"
-                      : "bg-slate-200 text-slate-700"
-                  }`}
-                >
-                  {pill.count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
         {/* Right Controls */}
         <div className="flex items-center gap-3">
+          {/* Month Selector Dropdown */}
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 shadow-2xs">
+            <Calendar className="w-4 h-4 text-sky-600 shrink-0" />
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+            >
+              <option value="All">All Months</option>
+              {uniqueMonths.map((m) => (
+                <option key={m} value={m}>
+                  {formatMonthLabel(m)}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Advanced Filter Toggle Button */}
           <button
             onClick={() => setIsFilterPanelOpen((prev) => !prev)}
@@ -1430,10 +1921,9 @@ export default function LeadsManager({
                 className="h-9 px-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none focus:border-sky-500 cursor-pointer"
               >
                 <option value="All">All Statuses</option>
-                <option value="New">New</option>
                 <option value="Active">Active</option>
                 <option value="Contacted">Contacted</option>
-                <option value="Follow-up Required">Follow-up Required</option>
+                <option value="Follow-up">Follow-up</option>
                 <option value="No Answer">No Answer</option>
               </select>
             </div>
@@ -1515,7 +2005,6 @@ export default function LeadsManager({
                 className="h-9 px-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none focus:border-sky-500 cursor-pointer"
               >
                 <option value="All">All Handlers</option>
-                <option value="Unassigned">Unassigned (Incoming)</option>
                 {uniqueHandlers.map((h) => (
                   <option key={h} value={h}>
                     {h}
@@ -1557,130 +2046,154 @@ export default function LeadsManager({
         </div>
       )}
 
-      {/* Active Filter Chips Bar */}
-      {activeFiltersCount > 0 && (
-        <div className="flex items-center gap-2 flex-wrap bg-white border border-slate-200/80 px-4 py-2.5 rounded-xl shadow-2xs">
-          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
-            Active Filters:
-          </span>
-          {statusFilter !== "All" && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">
-              Status: {statusFilter}
-              <button
-                onClick={() => setStatusFilter("All")}
-                className="hover:text-sky-900 cursor-pointer"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          )}
-          {filters.areaZone !== "All" && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Zone: {filters.areaZone}
-              <button
-                onClick={() =>
-                  setFilters((prev) => ({ ...prev, areaZone: "All" }))
-                }
-                className="hover:text-emerald-900 cursor-pointer"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          )}
-          {filters.campaign !== "All" && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-              Campaign: {filters.campaign}
-              <button
-                onClick={() =>
-                  setFilters((prev) => ({ ...prev, campaign: "All" }))
-                }
-                className="hover:text-indigo-900 cursor-pointer"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          )}
-          {filters.handledBy !== "All" && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-teal-50 text-teal-700 border border-teal-200">
-              Handled By: {filters.handledBy}
-              <button
-                onClick={() =>
-                  setFilters((prev) => ({ ...prev, handledBy: "All" }))
-                }
-                className="hover:text-teal-900 cursor-pointer"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          )}
-          {filters.paymentStatus !== "All" && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
-              Payment: {filters.paymentStatus}
-              <button
-                onClick={() =>
-                  setFilters((prev) => ({ ...prev, paymentStatus: "All" }))
-                }
-                className="hover:text-blue-900 cursor-pointer"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          )}
-          {filters.createdBy !== "All" && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
-              Added By: {filters.createdBy}
-              <button
-                onClick={() =>
-                  setFilters((prev) => ({ ...prev, createdBy: "All" }))
-                }
-                className="hover:text-purple-900 cursor-pointer"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          )}
-          {filters.dateFrom && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
-              From: {filters.dateFrom}
-              <button
-                onClick={() =>
-                  setFilters((prev) => ({ ...prev, dateFrom: "" }))
-                }
-                className="hover:text-rose-900 cursor-pointer"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          )}
-          {filters.dateTo && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
-              To: {filters.dateTo}
-              <button
-                onClick={() => setFilters((prev) => ({ ...prev, dateTo: "" }))}
-                className="hover:text-rose-900 cursor-pointer"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          )}
-          <button
-            onClick={resetAllFilters}
-            className="text-xs font-bold text-rose-600 hover:underline cursor-pointer ml-auto"
-          >
-            Clear All
-          </button>
-        </div>
-      )}
+      {/* Main Content Area: Recycle Bin View vs Normal Table/Grid Views */}
+      {quickFilterTab === "recycled" && isAdmin ? (
+        <div className="bg-white border border-rose-200 rounded-3xl p-6 shadow-sm flex flex-col gap-6">
+          <div className="bg-linear-to-r from-slate-900 to-rose-950 text-white p-5 rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-md border border-slate-800">
+            <div className="flex items-center gap-3.5">
+              <div className="p-3 bg-rose-500/20 text-rose-300 rounded-xl border border-rose-500/30">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-lg text-white tracking-tight flex items-center gap-2">
+                  <span>Lead Recycle Bin</span>
+                  <span className="text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-full px-2.5 py-0.5">
+                    Admin Access Only
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-300 font-medium mt-0.5">
+                  View soft-deleted leads, see who deleted them, and restore
+                  leads or permanently purge them.
+                </p>
+              </div>
+            </div>
 
-      {/* Main Content Area: Table View vs Grid Cards View */}
-      {viewMode === "table" ? (
+            <button
+              onClick={fetchRecycledLeads}
+              className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl border border-white/20 transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <RefreshCw
+                className={`w-3.5 h-3.5 ${loadingRecycled ? "animate-spin" : ""}`}
+              />
+              <span>Refresh Bin</span>
+            </button>
+          </div>
+
+          {recycledLeads.length === 0 ? (
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-12 text-center flex flex-col items-center gap-3 shadow-2xs">
+              <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl">
+                <CheckCircle2 className="w-10 h-10" />
+              </div>
+              <h4 className="text-base font-bold text-slate-900">
+                Recycle Bin is Empty
+              </h4>
+              <p className="text-xs text-slate-500 max-w-md">
+                No leads currently in the Recycle Bin. Any deleted leads will be
+                safely stored here for administrator recovery.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider text-[10px]">
+                      <th className="py-3.5 px-4">Client Name</th>
+                      <th className="py-3.5 px-4">Business</th>
+                      <th className="py-3.5 px-4">Contact Info</th>
+                      <th className="py-3.5 px-4">Deleted By</th>
+                      <th className="py-3.5 px-4">Deleted Date</th>
+                      <th className="py-3.5 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                    {recycledLeads.map((lead) => (
+                      <tr
+                        key={lead.id}
+                        className="hover:bg-rose-50/20 transition-colors"
+                      >
+                        <td className="py-3.5 px-4 font-bold text-slate-900">
+                          {lead.name}
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-600">
+                          {lead.businessName || "-"}
+                        </td>
+                        <td className="py-3.5 px-4 font-mono">
+                          <div>{lead.phone || "-"}</div>
+                          <div className="text-[10px] text-slate-400 font-sans">
+                            {lead.email}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                            <User className="w-3 h-3 text-rose-500" />
+                            <span>{lead.deletedBy || "System User"}</span>
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-500 text-[11px]">
+                          {lead.deletedAt
+                            ? new Date(lead.deletedAt).toLocaleString()
+                            : "-"}
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <div className="inline-flex items-center gap-2">
+                            <button
+                              onClick={() =>
+                                handleRestoreLead(lead.id, lead.name)
+                              }
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+                              title="Restore lead back to active leads"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                              <span>Restore</span>
+                            </button>
+                            <button
+                              onClick={() =>
+                                handlePermanentDeleteLead(lead.id, lead.name)
+                              }
+                              className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-2xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+                              title="Permanently wipe lead and attached files"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Purge</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : viewMode === "table" ? (
         <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto max-w-full">
             <table className="w-full text-left border-collapse min-w-max">
               <thead>
                 <tr className="bg-slate-50/80 border-b border-slate-200/70 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider select-none">
-                  <th className="p-4 border-r border-slate-200/50 text-center w-16 sticky left-0 bg-slate-50 shadow-[1px_0_0_0_rgba(241,245,249,1)]">
-                    S.No
+                  <th className="p-4 border-r border-slate-200/50 text-center w-20 sticky left-0 bg-slate-50 shadow-[1px_0_0_0_rgba(241,245,249,1)]">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <button
+                        onClick={handleSelectAllLeads}
+                        className="p-0.5 text-slate-400 hover:text-indigo-600 cursor-pointer transition-colors"
+                        title={
+                          selectedLeadIds.length === filteredLeads.length &&
+                          filteredLeads.length > 0
+                            ? "Deselect All"
+                            : "Select All"
+                        }
+                      >
+                        {filteredLeads.length > 0 &&
+                        selectedLeadIds.length === filteredLeads.length ? (
+                          <CheckSquare className="w-4 h-4 text-indigo-600" />
+                        ) : (
+                          <Square className="w-4 h-4" />
+                        )}
+                      </button>
+                      <span>S.No</span>
+                    </div>
                   </th>
                   {visibleColumns.map((col) => (
                     <th
@@ -1737,7 +2250,26 @@ export default function LeadsManager({
                       className="border-b border-slate-100/80 last:border-0 hover:bg-slate-50/60 font-semibold text-xs text-slate-700 transition-colors"
                     >
                       <td className="p-4 border-r border-slate-200/50 text-center text-slate-400 font-mono text-[11px] sticky left-0 bg-white group-hover:bg-slate-50/60 shadow-[1px_0_0_0_rgba(241,245,249,1)]">
-                        {idx + 1}
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() =>
+                              handleToggleSelectLead(lead.id || lead._id)
+                            }
+                            className="p-0.5 text-slate-400 hover:text-indigo-600 cursor-pointer transition-colors"
+                            title={
+                              selectedLeadIds.includes(lead.id || lead._id)
+                                ? "Deselect Lead"
+                                : "Select Lead"
+                            }
+                          >
+                            {selectedLeadIds.includes(lead.id || lead._id) ? (
+                              <CheckSquare className="w-4 h-4 text-indigo-600" />
+                            ) : (
+                              <Square className="w-4 h-4 text-slate-300" />
+                            )}
+                          </button>
+                          <span>{idx + 1}</span>
+                        </div>
                       </td>
                       {visibleColumns.map((col) => (
                         <td
@@ -1792,6 +2324,24 @@ export default function LeadsManager({
                             title="Quick View Details"
                           >
                             <Eye className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Schedule Follow-Up Button */}
+                          <button
+                            onClick={() => handleOpenScheduleFollowUp(lead)}
+                            className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg border border-blue-200/70 transition-all cursor-pointer shadow-2xs"
+                            title="Schedule Follow-Up Task"
+                          >
+                            <Calendar className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Forward Lead Button */}
+                          <button
+                            onClick={() => handleOpenForwardModal(lead)}
+                            className="p-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg border border-indigo-200/70 transition-all cursor-pointer shadow-2xs"
+                            title="Forward Lead to another employee"
+                          >
+                            <Send className="w-3.5 h-3.5" />
                           </button>
 
                           {/* Edit Lead Button */}
@@ -2017,7 +2567,6 @@ export default function LeadsManager({
                         }
                       >
                         <ImageIcon className="w-3.5 h-3.5" />
-                        <span>Images</span>
                         {imgCount > 0 && (
                           <span className="bg-purple-200 text-purple-800 text-[10px] font-extrabold px-1.5 py-0.2 rounded-md ml-0.5">
                             {imgCount}
@@ -2033,6 +2582,20 @@ export default function LeadsManager({
                     title="View Details"
                   >
                     <Eye className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleOpenScheduleFollowUp(lead)}
+                    className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl border border-blue-200/70 transition-all cursor-pointer"
+                    title="Schedule Follow-Up Task"
+                  >
+                    <Calendar className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleOpenForwardModal(lead)}
+                    className="p-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl border border-indigo-200/70 transition-all cursor-pointer"
+                    title="Forward Lead to another employee"
+                  >
+                    <Send className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleOpenEditLead(lead)}
@@ -2411,7 +2974,10 @@ export default function LeadsManager({
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleDeleteDocument(quickViewLead.id || quickViewLead._id, img);
+                                  handleDeleteDocument(
+                                    quickViewLead.id || quickViewLead._id,
+                                    img,
+                                  );
                                 }}
                                 className="absolute top-1.5 right-1.5 bg-rose-600/90 hover:bg-rose-600 text-white p-1.5 rounded-lg z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-sm"
                                 title="Delete image from Cloudinary"
@@ -2430,10 +2996,213 @@ export default function LeadsManager({
                     </div>
                   );
                 })()}
+
+                {/* Section 7: Activity & Audit History Log */}
+                <div className="space-y-3 pt-3 border-t border-slate-200/80">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-indigo-100/70 rounded-lg text-indigo-700">
+                        <History className="w-4 h-4" />
+                      </div>
+                      <h4 className="font-extrabold text-slate-800 text-xs uppercase tracking-wider">
+                        Activity & Audit History
+                      </h4>
+                    </div>
+                    <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full">
+                      {(quickViewLead.history?.length || 0) +
+                        (quickViewLead.forwardHistory?.length || 0)}{" "}
+                      Entry(s)
+                    </span>
+                  </div>
+
+                  {(() => {
+                    const combinedHistory = [];
+
+                    if (Array.isArray(quickViewLead.history)) {
+                      quickViewLead.history.forEach((h) => {
+                        combinedHistory.push({
+                          id: h._id || Math.random().toString(),
+                          type: h.action || "ACTIVITY",
+                          title:
+                            h.action === "CREATED"
+                              ? "Lead Created"
+                              : h.action === "FORWARDED"
+                                ? "Lead Forwarded"
+                                : h.action === "ACCEPTED"
+                                  ? "Lead Accepted"
+                                  : h.action === "UPDATED"
+                                    ? "Profile Updated"
+                                    : h.action === "DOCUMENT_UPLOADED"
+                                      ? "Document Uploaded"
+                                      : h.action === "DOCUMENT_DELETED"
+                                        ? "Document Deleted"
+                                        : h.action === "SOFT_DELETED"
+                                          ? "Moved to Recycle Bin"
+                                          : h.action === "RESTORED"
+                                            ? "Restored from Recycle Bin"
+                                            : "Lead Activity",
+                          performedBy: h.performedBy || "System",
+                          timestamp: h.timestamp || h.createdAt,
+                          details: h.details,
+                          changes: h.changes,
+                        });
+                      });
+                    }
+
+                    if (Array.isArray(quickViewLead.forwardHistory)) {
+                      quickViewLead.forwardHistory.forEach((fh) => {
+                        const isDuplicate = combinedHistory.some(
+                          (c) =>
+                            c.type === "FORWARDED" &&
+                            new Date(c.timestamp).getTime() ===
+                              new Date(fh.forwardedAt).getTime(),
+                        );
+                        if (!isDuplicate) {
+                          combinedHistory.push({
+                            id: fh._id || Math.random().toString(),
+                            type: "FORWARDED",
+                            title: `Forwarded to ${fh.forwardedTo || "Employee"}`,
+                            performedBy: fh.forwardedBy || "System",
+                            timestamp: fh.forwardedAt,
+                            details: fh.remark
+                              ? `Note: ${fh.remark}`
+                              : `Lead responsibility assigned to ${fh.forwardedTo}`,
+                            changes: {
+                              handledBy: {
+                                from: "Previous Owner",
+                                to: fh.forwardedTo,
+                              },
+                            },
+                          });
+                        }
+                      });
+                    }
+
+                    if (combinedHistory.length === 0) {
+                      combinedHistory.push({
+                        id: "created-fallback",
+                        type: "CREATED",
+                        title: "Lead Created",
+                        performedBy: quickViewLead.createdBy || "System",
+                        timestamp:
+                          quickViewLead.createdAt || quickViewLead.leadDate,
+                        details: "Lead created in system",
+                      });
+                    }
+
+                    combinedHistory.sort(
+                      (a, b) =>
+                        new Date(b.timestamp || 0) - new Date(a.timestamp || 0),
+                    );
+
+                    return (
+                      <div className="relative pl-5 space-y-3.5 pt-1 before:absolute before:left-2 before:top-2.5 before:bottom-2.5 before:w-0.5 before:bg-slate-200">
+                        {combinedHistory.map((item, idx) => {
+                          const formattedTime = item.timestamp
+                            ? new Date(item.timestamp).toLocaleString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                                hour: "numeric",
+                                minute: "2-digit",
+                                hour12: true,
+                              })
+                            : "Recent";
+
+                          let badgeBg =
+                            "bg-slate-100 text-slate-700 border-slate-200";
+                          let icon = (
+                            <Clock className="w-3 h-3 text-slate-500" />
+                          );
+
+                          if (item.type === "FORWARDED") {
+                            badgeBg =
+                              "bg-indigo-50 text-indigo-700 border-indigo-200";
+                            icon = <Send className="w-3 h-3 text-indigo-600" />;
+                          } else if (item.type === "CREATED") {
+                            badgeBg =
+                              "bg-emerald-50 text-emerald-700 border-emerald-200";
+                            icon = (
+                              <Plus className="w-3 h-3 text-emerald-600" />
+                            );
+                          } else if (item.type === "ACCEPTED") {
+                            badgeBg =
+                              "bg-blue-50 text-blue-700 border-blue-200";
+                            icon = (
+                              <CheckCircle2 className="w-3 h-3 text-blue-600" />
+                            );
+                          } else if (item.type === "UPDATED") {
+                            badgeBg =
+                              "bg-purple-50 text-purple-700 border-purple-200";
+                            icon = (
+                              <RefreshCw className="w-3 h-3 text-purple-600" />
+                            );
+                          } else if (
+                            item.type === "DOCUMENT_UPLOADED" ||
+                            item.type === "DOCUMENT_DELETED"
+                          ) {
+                            badgeBg =
+                              "bg-amber-50 text-amber-700 border-amber-200";
+                            icon = (
+                              <ImageIcon className="w-3 h-3 text-amber-600" />
+                            );
+                          }
+
+                          return (
+                            <div
+                              key={item.id || idx}
+                              className="relative group"
+                            >
+                              <div className="absolute -left-[21px] top-1.5 w-3 h-3 rounded-full bg-white border-2 border-indigo-500 group-hover:scale-125 transition-transform" />
+
+                              <div className="bg-slate-50/90 hover:bg-slate-50 border border-slate-200/80 rounded-2xl p-3 text-xs transition-all shadow-2xs">
+                                <div className="flex items-center justify-between gap-2 mb-1">
+                                  <span
+                                    className={`px-2 py-0.5 text-[10px] font-extrabold rounded-md border inline-flex items-center gap-1 ${badgeBg}`}
+                                  >
+                                    {icon}
+                                    <span>{item.title}</span>
+                                  </span>
+                                  <span className="text-[10px] font-semibold text-slate-400">
+                                    {formattedTime}
+                                  </span>
+                                </div>
+
+                                {item.details && (
+                                  <p className="text-slate-600 font-medium text-[11px] mt-1 whitespace-pre-wrap">
+                                    {item.details}
+                                  </p>
+                                )}
+
+                                {item.performedBy && (
+                                  <div className="mt-1.5 pt-1.5 border-t border-slate-200/60 flex items-center justify-between text-[10px] text-slate-500 font-semibold">
+                                    <span>
+                                      Action By:{" "}
+                                      <strong className="text-slate-700">
+                                        {item.performedBy}
+                                      </strong>
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
               </div>
 
               {/* Bottom Actions Footer */}
               <div className="bg-white/95 backdrop-blur-md border-t border-slate-200/80 p-4 flex items-center justify-between gap-3 shrink-0 shadow-lg">
+                <button
+                  onClick={() => handleOpenScheduleFollowUp(quickViewLead)}
+                  className="px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-xs rounded-xl border border-blue-200/80 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                >
+                  <Calendar className="w-4 h-4 text-blue-600" />
+                  <span>Schedule Follow-Up</span>
+                </button>
                 {!quickViewLead.handledBy ? (
                   <button
                     onClick={() => {
@@ -2456,13 +3225,22 @@ export default function LeadsManager({
                     <span>Assigned to {quickViewLead.handledBy}</span>
                   </div>
                 )}
-                <button
-                  onClick={() => handleOpenEditLead(quickViewLead)}
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-colors cursor-pointer flex items-center gap-1.5"
-                >
-                  <Edit3 className="w-4 h-4 text-slate-500" />
-                  <span>Edit Lead</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleOpenForwardModal(quickViewLead)}
+                    className="px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Send className="w-4 h-4 text-indigo-600" />
+                    <span>Forward Lead</span>
+                  </button>
+                  <button
+                    onClick={() => handleOpenEditLead(quickViewLead)}
+                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Edit3 className="w-4 h-4 text-slate-500" />
+                    <span>Edit Lead</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>,
@@ -2495,16 +3273,15 @@ export default function LeadsManager({
                     </span>
                     <span className="text-slate-300 font-normal">•</span>
                     <span className="text-sky-700 font-extrabold text-xs bg-sky-100/80 px-2.5 py-0.5 rounded-lg border border-sky-200 inline-flex items-center gap-1.5 shadow-2xs">
-                      {
-                        [
-                          { id: "general", label: "General Info" },
-                          { id: "contact", label: "Contact & Social" },
-                          { id: "financials", label: "Financials" },
-                          { id: "call", label: "Call Activity" },
-                          { id: "documents", label: "Documents / Images" },
-                          { id: "custom", label: "Custom Fields" },
-                        ].find((t) => t.id === activeFormTab)?.label || "General Info"
-                      }
+                      {[
+                        { id: "general", label: "General Info" },
+                        { id: "contact", label: "Contact & Social" },
+                        { id: "financials", label: "Financials" },
+                        { id: "call", label: "Call Activity" },
+                        { id: "documents", label: "Documents / Images" },
+                        { id: "custom", label: "Custom Fields" },
+                      ].find((t) => t.id === activeFormTab)?.label ||
+                        "General Info"}
                     </span>
                   </h3>
                   <p className="text-[11px] text-slate-400 font-medium mt-0.5">
@@ -2538,18 +3315,29 @@ export default function LeadsManager({
                   { id: "custom", label: "Custom Fields" },
                 ].map((stepTab, idx) => {
                   const isActive = activeFormTab === stepTab.id;
-                  const isPast = FORM_STEPS.indexOf(stepTab.id) < currentStepIndex;
+                  const isPast =
+                    FORM_STEPS.indexOf(stepTab.id) < currentStepIndex;
                   return (
                     <button
                       key={stepTab.id}
                       type="button"
                       onClick={() => {
-                        if (activeFormTab === "general" && !formValues.name?.trim()) {
-                          alert("Please enter the Client Name before switching tabs.");
+                        if (
+                          activeFormTab === "general" &&
+                          !formValues.name?.trim()
+                        ) {
+                          alert(
+                            "Please enter the Client Name before switching tabs.",
+                          );
                           return;
                         }
-                        if (activeFormTab === "contact" && !formValues.phone?.trim()) {
-                          alert("Please enter the Phone Number before switching tabs.");
+                        if (
+                          activeFormTab === "contact" &&
+                          !formValues.phone?.trim()
+                        ) {
+                          alert(
+                            "Please enter the Phone Number before switching tabs.",
+                          );
                           return;
                         }
                         setActiveFormTab(stepTab.id);
@@ -2564,7 +3352,9 @@ export default function LeadsManager({
                     >
                       <span
                         className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${
-                          isActive ? "bg-white text-sky-700 font-extrabold" : "bg-slate-300 text-slate-700"
+                          isActive
+                            ? "bg-white text-sky-700 font-extrabold"
+                            : "bg-slate-300 text-slate-700"
                         }`}
                       >
                         {idx + 1}
@@ -2938,8 +3728,8 @@ export default function LeadsManager({
                         <option value="New">New</option>
                         <option value="Active">Active</option>
                         <option value="Contacted">Contacted</option>
-                        <option value="Follow-up Required">
-                          Follow-up Required
+                        <option value="Follow-up">
+                          Follow-up
                         </option>
                         <option value="No Answer">No Answer</option>
                       </select>
@@ -3160,7 +3950,12 @@ export default function LeadsManager({
                                     </a>
                                     <button
                                       type="button"
-                                      onClick={() => handleDeleteDocument(leadModal.leadId, doc)}
+                                      onClick={() =>
+                                        handleDeleteDocument(
+                                          leadModal.leadId,
+                                          doc,
+                                        )
+                                      }
                                       className="bg-rose-600/90 hover:bg-rose-600 backdrop-blur-xs text-white p-1.5 rounded-lg transition-colors cursor-pointer"
                                       title="Delete image from Cloudinary"
                                     >
@@ -3184,7 +3979,12 @@ export default function LeadsManager({
                                 {!isImg && (
                                   <button
                                     type="button"
-                                    onClick={() => handleDeleteDocument(leadModal.leadId, doc)}
+                                    onClick={() =>
+                                      handleDeleteDocument(
+                                        leadModal.leadId,
+                                        doc,
+                                      )
+                                    }
                                     className="p-1 text-slate-400 hover:text-rose-500 rounded-md hover:bg-rose-50 transition-colors cursor-pointer shrink-0"
                                     title="Delete document"
                                   >
@@ -3598,6 +4398,354 @@ export default function LeadsManager({
           </div>,
           document.body,
         )}
+
+      {/* Floating Bulk Actions Bar */}
+      {selectedLeadIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/90 backdrop-blur-md text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center gap-4 animate-in slide-in-from-bottom-5 duration-200">
+          <div className="text-xs font-extrabold flex items-center gap-2">
+            <span className="w-6 h-6 bg-indigo-500 text-white rounded-full flex items-center justify-center text-[11px]">
+              {selectedLeadIds.length}
+            </span>
+            <span>lead(s) selected</span>
+          </div>
+          <div className="h-4 w-px bg-slate-700" />
+          <button
+            onClick={() => {
+              const selectedLeads = leads.filter((l) =>
+                selectedLeadIds.includes(l.id || l._id),
+              );
+              handleOpenForwardModal(selectedLeads);
+            }}
+            className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span>Forward Selected Leads</span>
+          </button>
+          <button
+            onClick={() => setSelectedLeadIds([])}
+            className="px-3 py-1.5 text-slate-400 hover:text-white font-bold text-xs transition-colors cursor-pointer"
+          >
+            Deselect All
+          </button>
+        </div>
+      )}
+
+      {/* Forward Lead Modal */}
+      {forwardModal.isOpen &&
+        isClient &&
+        createPortal(
+          <div className="fixed inset-0 z-99999 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+            <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-md overflow-hidden flex flex-col">
+              {/* Modal Header */}
+              <div className="p-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-white/20 backdrop-blur-md rounded-2xl">
+                    <Send className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-base leading-snug">
+                      {forwardModal.leadsToForward.length > 1
+                        ? `Forward ${forwardModal.leadsToForward.length} Leads`
+                        : "Forward Lead"}
+                    </h3>
+                    <p className="text-xs text-indigo-100 font-medium">
+                      Assign lead responsibility to another employee
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleCloseForwardModal}
+                  className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 space-y-4 text-xs font-semibold text-slate-700">
+                {/* Selected Lead Summary */}
+                {forwardModal.leadsToForward.length === 1 && (
+                  <div className="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-3.5 flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-indigo-950 text-sm">
+                        {forwardModal.leadsToForward[0].name}
+                      </div>
+                      <div className="text-[11px] text-indigo-700 font-medium">
+                        {forwardModal.leadsToForward[0].businessName ||
+                          "Individual Client"}{" "}
+                        • {forwardModal.leadsToForward[0].phone}
+                      </div>
+                    </div>
+                    {forwardModal.leadsToForward[0].handledBy ? (
+                      <span className="px-2.5 py-1 bg-white text-indigo-700 border border-indigo-200 text-[10px] font-bold rounded-lg">
+                        Currently: {forwardModal.leadsToForward[0].handledBy}
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 bg-amber-100 text-amber-800 text-[10px] font-bold rounded-lg">
+                        Unassigned
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Select Recipient Employee */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Select Employee <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    value={forwardModal.targetUserId}
+                    onChange={(e) =>
+                      setForwardModal((prev) => ({
+                        ...prev,
+                        targetUserId: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer"
+                  >
+                    <option value="">-- Choose Employee --</option>
+                    {(users || [])
+                      .filter((u) => {
+                        const uId = String(u._id || u.id || "");
+                        const currentUserId = String(
+                          user?._id || user?.id || "",
+                        );
+                        const currentUserEmail = (
+                          user?.email || ""
+                        ).toLowerCase();
+                        const uEmail = (u.email || "").toLowerCase();
+
+                        // Exclude current user themselves
+                        if (uId && currentUserId && uId === currentUserId)
+                          return false;
+                        if (
+                          uEmail &&
+                          currentUserEmail &&
+                          uEmail === currentUserEmail
+                        )
+                          return false;
+
+                        // Only hide admin users if current logged-in user is NOT an admin
+                        if (user?.role !== "admin" && u.role === "admin")
+                          return false;
+
+                        return true;
+                      })
+                      .map((u) => (
+                        <option
+                          key={u._id || u.id || u.email}
+                          value={u._id || u.id || u.email}
+                        >
+                          {u.name || u.email} ({u.email})
+                        </option>
+                      ))}
+                  </select>
+                  {(!users || users.length === 0) && (
+                    <p className="text-[11px] text-amber-600 font-medium mt-1">
+                      No registered employees found.
+                    </p>
+                  )}
+                </div>
+
+                {/* Optional Remark / Note */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Forwarding Note / Reason{" "}
+                    <span className="text-slate-400 font-normal">
+                      (Optional)
+                    </span>
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={forwardModal.remark}
+                    onChange={(e) =>
+                      setForwardModal((prev) => ({
+                        ...prev,
+                        remark: e.target.value,
+                      }))
+                    }
+                    placeholder="Add a message or context for the recipient employee..."
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={handleCloseForwardModal}
+                  className="px-4 py-2.5 text-slate-600 hover:bg-slate-200/70 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={
+                    !forwardModal.targetUserId || forwardModal.isSubmitting
+                  }
+                  onClick={handleConfirmForward}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-md shadow-indigo-600/20 transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  {forwardModal.isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Forwarding...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>Confirm Forward</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {/* Schedule Follow-Up Modal */}
+      {scheduleFollowUpModal.isOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-99999 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+            <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-md overflow-hidden flex flex-col">
+              {/* Modal Header */}
+              <div className="p-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-white/20 backdrop-blur-md rounded-2xl">
+                    <Calendar className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-base leading-snug">
+                      Schedule Follow-Up
+                    </h3>
+                    <p className="text-xs text-blue-100 font-medium">
+                      Add a follow-up task for{" "}
+                      {scheduleFollowUpModal.lead?.name || "Client"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleCloseScheduleFollowUp}
+                  className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 space-y-4 text-xs font-semibold text-slate-700">
+                {/* Client Info Banner */}
+                <div className="bg-blue-50/60 border border-blue-100 rounded-2xl p-3.5 flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-slate-900 text-sm">
+                      {scheduleFollowUpModal.lead?.name}
+                    </div>
+                    <div className="text-[11px] text-blue-700 font-medium font-mono">
+                      {scheduleFollowUpModal.lead?.phone} •{" "}
+                      {scheduleFollowUpModal.lead?.businessName || "Client"}
+                    </div>
+                  </div>
+                  <span className="px-2.5 py-1 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-lg">
+                    {scheduleFollowUpModal.lead?.status || "Active"}
+                  </span>
+                </div>
+
+                {/* Follow-Up Date & Time Input */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Follow-Up Date & Time</span>
+                    <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={scheduleFollowUpModal.scheduledAt}
+                    onChange={(e) =>
+                      setScheduleFollowUpModal((prev) => ({
+                        ...prev,
+                        scheduledAt: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
+                  />
+                </div>
+
+                {/* Follow-Up Description / Note */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Follow-Up Task / Note</span>
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={scheduleFollowUpModal.description}
+                    onChange={(e) =>
+                      setScheduleFollowUpModal((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
+                    placeholder="Enter discussion topics, call agenda, or reminders..."
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={handleCloseScheduleFollowUp}
+                  className="px-4 py-2.5 text-slate-600 hover:bg-slate-200/70 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={
+                    !scheduleFollowUpModal.scheduledAt ||
+                    scheduleFollowUpModal.isSubmitting
+                  }
+                  onClick={handleConfirmScheduleFollowUp}
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-md shadow-blue-600/20 transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  {scheduleFollowUpModal.isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Scheduling...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="w-4 h-4" />
+                      <span>Confirm Schedule</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed bottom-6 right-6 z-99999 px-4 py-3 rounded-2xl shadow-2xl border text-xs font-bold flex items-center gap-2.5 animate-bounce-in ${
+            toast.type === "error"
+              ? "bg-rose-900 text-white border-rose-700"
+              : "bg-slate-900 text-white border-slate-700"
+          }`}
+        >
+          {toast.type === "error" ? (
+            <AlertCircle className="w-4 h-4 text-rose-400" />
+          ) : (
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          )}
+          <span>{toast.message}</span>
+        </div>
+      )}
     </div>
   );
 }

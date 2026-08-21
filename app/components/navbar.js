@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { API_BASE_URL } from "../../lib/apiConfig";
 
-const Navbar = ({ user, onToggleSidebar, leads = [], setActiveTab }) => {
+const Navbar = ({
+  user,
+  onToggleSidebar,
+  onToggleMobileMenu,
+  leads = [],
+  setActiveTab,
+}) => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [followUps, setFollowUps] = useState([]);
   const prevCountRef = useRef(0);
@@ -9,6 +15,7 @@ const Navbar = ({ user, onToggleSidebar, leads = [], setActiveTab }) => {
   // Search Bar State
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMobileSearchVisible, setIsMobileSearchVisible] = useState(false);
   const searchRef = useRef(null);
 
   useEffect(() => {
@@ -103,28 +110,51 @@ const Navbar = ({ user, onToggleSidebar, leads = [], setActiveTab }) => {
   const handleSelectLead = (lead) => {
     if (setActiveTab) setActiveTab("leads");
     setIsSearchOpen(false);
+    setIsMobileSearchVisible(false);
     setSearchTerm("");
   };
 
   const handleSelectNav = (tabId) => {
     if (setActiveTab) setActiveTab(tabId);
     setIsSearchOpen(false);
+    setIsMobileSearchVisible(false);
     setSearchTerm("");
   };
 
   return (
-    <header className="h-16 bg-[#1e293b] text-white px-20 flex items-center justify-between shadow-md border-b border-slate-800 select-none">
+    <header className="h-16 bg-[#1e293b] text-white px-3 sm:px-6 md:px-8 flex items-center justify-between shadow-md border-b border-slate-800 select-none relative z-30">
       {/* Left section: Brand & Search */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
+        {/* Mobile Sidebar Hamburger Toggle */}
+        <button
+          onClick={onToggleMobileMenu}
+          className="md:hidden text-slate-400 hover:text-white transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-slate-800"
+          title="Open Menu"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
+
         {/* Brand Logo */}
-        <div className="flex items-center gap-2 w-25">
-          <img src="/logo/A2V  Groups Logo.png" alt="" />
+        <div className="flex items-center gap-2 w-20 sm:w-24 shrink-0">
+          <img src="/logo/A2V  Groups Logo.png" alt="A2V Logo" className="max-h-8 w-auto object-contain" />
         </div>
 
-        {/* Sidebar Collapse Toggle */}
+        {/* Desktop Sidebar Collapse Toggle */}
         <button
           onClick={onToggleSidebar}
-          className="text-slate-400 hover:text-white transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-slate-800"
+          className="hidden md:block text-slate-400 hover:text-white transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-slate-800"
           title="Toggle Sidebar"
         >
           <svg
@@ -142,8 +172,15 @@ const Navbar = ({ user, onToggleSidebar, leads = [], setActiveTab }) => {
           </svg>
         </button>
 
-        {/* Search Bar with Live Instant Results */}
-        <div ref={searchRef} className="relative hidden md:block">
+        {/* Search Bar with Live Instant Results (Desktop & Mobile view) */}
+        <div
+          ref={searchRef}
+          className={`relative ${
+            isMobileSearchVisible
+              ? "absolute top-16 left-0 right-0 p-3 bg-[#1e293b] border-b border-slate-800 z-50 flex justify-center"
+              : "hidden md:block"
+          }`}
+        >
           <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
             <svg
               className="w-4 h-4"
@@ -186,7 +223,7 @@ const Navbar = ({ user, onToggleSidebar, leads = [], setActiveTab }) => {
 
           {/* Live Search Results Dropdown */}
           {isSearchOpen && searchTerm.trim() !== "" && (
-            <div className="absolute top-full left-0 mt-2 w-96 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-50 text-slate-800 animate-fade-in">
+            <div className="absolute top-full left-1/2 -translate-x-1/2 md:left-0 md:translate-x-0 mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden z-50 text-slate-800 animate-fade-in">
               <div className="p-2.5 bg-slate-50 border-b border-slate-100 flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                 <span>Search Results</span>
                 <span>{filteredLeads.length + filteredNav.length} matches</span>
@@ -285,9 +322,30 @@ const Navbar = ({ user, onToggleSidebar, leads = [], setActiveTab }) => {
       </div>
 
       {/* Right section: Actions & User Info */}
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-2 sm:gap-4 md:gap-5">
         {/* Action icons */}
-        <div className="flex items-center gap-3 text-slate-300">
+        <div className="flex items-center gap-2 sm:gap-3 text-slate-300">
+          {/* Mobile Search Toggle Icon */}
+          <button
+            onClick={() => setIsMobileSearchVisible(!isMobileSearchVisible)}
+            className="md:hidden hover:text-white transition-colors p-1 cursor-pointer"
+            title="Search"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </button>
+
           {/* Settings Button */}
           <button
             onClick={() => setActiveTab && setActiveTab("settings")}
@@ -340,7 +398,7 @@ const Navbar = ({ user, onToggleSidebar, leads = [], setActiveTab }) => {
             </button>
 
             {isNotificationsOpen && (
-              <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50 animate-fade-in text-left cursor-default">
+              <div className="absolute top-full right-0 mt-2 w-[calc(100vw-2rem)] max-w-xs sm:w-80 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50 animate-fade-in text-left cursor-default">
                 <div className="p-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
                   <h3 className="font-bold text-slate-800 text-xs tracking-wider uppercase flex items-center gap-2">
                     Notifications
@@ -423,9 +481,9 @@ const Navbar = ({ user, onToggleSidebar, leads = [], setActiveTab }) => {
           <div
             onClick={() => setActiveTab && setActiveTab("settings")}
             title="View Profile Settings"
-            className="flex items-center gap-3 border-l border-slate-700 pl-5 cursor-pointer group"
+            className="flex items-center gap-2 sm:gap-3 border-l border-slate-700 pl-2 sm:pl-4 cursor-pointer group"
           >
-            <div className="flex flex-col text-right">
+            <div className="hidden sm:flex flex-col text-right">
               <span className="font-bold text-xs leading-tight tracking-wide group-hover:text-sky-400 transition-colors">
                 {user.name}
               </span>
@@ -433,7 +491,7 @@ const Navbar = ({ user, onToggleSidebar, leads = [], setActiveTab }) => {
                 {user.email}
               </span>
             </div>
-            <div className="w-9 h-9 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center font-extrabold text-xl uppercase text-sky-400 select-none shadow group-hover:border-sky-500 transition-colors">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center font-extrabold text-sm sm:text-xl uppercase text-sky-400 select-none shadow group-hover:border-sky-500 transition-colors">
               {user.name?.substring(0, 1)}
             </div>
           </div>

@@ -55,7 +55,14 @@ export default function FollowUpsView({ user }) {
   const fetchFollowUps = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/followups`);
+      const userId = user?.id || user?._id || user?.email || "";
+      const userRole = user?.role || "";
+      const response = await fetch(`${API_BASE_URL}/api/followups`, {
+        headers: {
+          "x-user-id": userId,
+          "x-user-role": userRole,
+        },
+      });
       const data = await response.json();
       if (data.success) {
         setFollowUps(data.followUps || []);
@@ -162,13 +169,19 @@ export default function FollowUpsView({ user }) {
           (typeof window !== "undefined"
             ? JSON.parse(localStorage.getItem("user"))
             : null);
+        const creatorId = currentUser?.id || currentUser?._id || "";
+        const userIdHeader = currentUser?.id || currentUser?._id || currentUser?.email || "";
         const payload = {
           ...formData,
-          createdBy: currentUser?.name || currentUser?.email || "Admin",
+          createdBy: currentUser?.name || currentUser?.email || "Agent",
+          createdById: creatorId,
         };
         const response = await fetch(`${API_BASE_URL}/api/followups`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "x-user-id": userIdHeader,
+          },
           body: JSON.stringify(payload),
         });
         const data = await response.json();
@@ -242,22 +255,41 @@ export default function FollowUpsView({ user }) {
     showToast(`Copied ${phone} to clipboard`);
   };
 
+  // Filter follow-ups so non-admin employees only see follow-ups created by them
+  const userVisibleFollowUps = useMemo(() => {
+    if (!user || user.role === "admin") return followUps;
+    const uId = String(user.id || user._id || "");
+    const uEmail = (user.email || "").toLowerCase();
+    const uName = (user.name || "").toLowerCase();
+
+    return followUps.filter((f) => {
+      const fCreatedBy = (f.createdBy || "").toLowerCase();
+      const fCreatedById = String(f.createdById || "");
+
+      return (
+        (uId && fCreatedById === uId) ||
+        (uEmail && fCreatedBy.includes(uEmail)) ||
+        (uName && fCreatedBy.includes(uName))
+      );
+    });
+  }, [followUps, user]);
+
   // Metric Stats Calculations
   const stats = useMemo(() => {
-    const total = followUps.length;
-    const completed = followUps.filter((f) => f.status === "Completed").length;
-    const pending = followUps.filter((f) => f.status === "Pending").length;
+    const total = userVisibleFollowUps.length;
+    const completed = userVisibleFollowUps.filter((f) => f.status === "Completed").length;
+    const pending = userVisibleFollowUps.filter((f) => f.status === "Pending").length;
 
     const now = new Date();
     const todayStr = now.toDateString();
 
-    const dueToday = followUps.filter((f) => {
+    const dueToday = userVisibleFollowUps.filter((f) => {
       if (f.status === "Completed") return false;
       const d = new Date(f.scheduledAt);
       return d.toDateString() === todayStr;
     }).length;
 
-    const overdue = followUps.filter((f) => {
+    const overdue = userVisibleFollowUps.filter((f) => {
       if (f.status === "Completed") return false;
       const d = new Date(f.scheduledAt);
       return d < now && d.toDateString() !== todayStr;
@@ -266,14 +298,14 @@ export default function FollowUpsView({ user }) {
     const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
     return { total, completed, pending, dueToday, overdue, rate };
-  }, [followUps]);
+  }, [userVisibleFollowUps]);
 
   // Search & Filtered Data
   const filteredFollowUps = useMemo(() => {
     const now = new Date();
     const todayStr = now.toDateString();
 
-    return followUps
+    return userVisibleFollowUps
       .filter((f) => {
         // Search filter
         if (searchQuery.trim()) {
@@ -542,7 +574,7 @@ export default function FollowUpsView({ user }) {
 
       {/* Main Grid View of Callbacks */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((n) => (
             <div
               key={n}
@@ -595,7 +627,7 @@ export default function FollowUpsView({ user }) {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {filteredFollowUps.map((f) => {
             const isCompleted = f.status === "Completed";
             const badge = getScheduleBadge(f.scheduledAt, isCompleted);
@@ -613,7 +645,7 @@ export default function FollowUpsView({ user }) {
               >
                 {/* Card Header & Lead Info */}
                 <div>
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col items-center justify-center gap-3">
                     {/* Lead Avatar & Name */}
                     <div className="flex items-center gap-3">
                       <div
