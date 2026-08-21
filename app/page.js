@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
 
+import { API_BASE_URL } from '../lib/apiConfig';
+
 export default function Home() {
   const router = useRouter();
   const [error, setError] = useState('');
@@ -41,11 +43,31 @@ export default function Home() {
       }
 
       if (data?.user) {
+        let userRole = data.user.user_metadata?.role || 'employee';
+
+        // Fetch up-to-date role profile from MongoDB
+        try {
+          const profileRes = await fetch(`${API_BASE_URL}/api/users`, {
+            headers: { 'x-user-id': data.user.email },
+          });
+          const profileData = await profileRes.json();
+          if (profileData.success && Array.isArray(profileData.users)) {
+            const found = profileData.users.find(
+              (u) => u.email?.toLowerCase() === data.user.email?.toLowerCase()
+            );
+            if (found && found.role) {
+              userRole = found.role;
+            }
+          }
+        } catch (pErr) {
+          console.warn('MongoDB user profile role sync notice:', pErr);
+        }
+
         const userObj = {
           id: data.user.id,
           name: data.user.user_metadata?.name || data.user.email.split('@')[0],
           email: data.user.email,
-          role: data.user.user_metadata?.role || 'user',
+          role: userRole,
         };
 
         setSuccess(`Logged in successfully as ${userObj.name}!`);

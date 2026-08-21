@@ -9,11 +9,37 @@ const Sidebar = ({
   isMobileOpen,
   onCloseMobile,
   incomingCount = 0,
+  unreadChatCount = 0,
 }) => {
+  const isDesigner = user?.role === "designer";
+
   const companyItems = [
+    ...(!isDesigner
+      ? [
+          {
+            id: "dashboard",
+            label: "Dashboard",
+            icon: (
+              <svg
+                className="w-4.5 h-4.5 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                />
+              </svg>
+            ),
+          },
+        ]
+      : []),
     {
-      id: "dashboard",
-      label: "Dashboard",
+      id: "design-projects",
+      label: "Design Projects",
       icon: (
         <svg
           className="w-4.5 h-4.5 shrink-0"
@@ -25,15 +51,15 @@ const Sidebar = ({
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
-            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
           />
         </svg>
       ),
     },
     {
-      id: "incoming-leads",
-      label: "Incoming Leads",
-      badge: incomingCount,
+      id: "chat",
+      label: "Messages & Chat",
+      badge: unreadChatCount,
       icon: (
         <svg
           className="w-4.5 h-4.5 shrink-0"
@@ -45,49 +71,73 @@ const Sidebar = ({
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
-            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
           />
         </svg>
       ),
     },
-    {
-      id: "leads",
-      label: "Leads",
-      icon: (
-        <svg
-          className="w-4.5 h-4.5 shrink-0"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z"
-          />
-        </svg>
-      ),
-    },
-    {
-      id: "follow-ups",
-      label: "Follow-ups",
-      icon: (
-        <svg
-          className="w-4.5 h-4.5 shrink-0"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-      ),
-    },
+    ...(!isDesigner
+      ? [
+          {
+            id: "incoming-leads",
+            label: "Incoming Leads",
+            badge: incomingCount,
+            icon: (
+              <svg
+                className="w-4.5 h-4.5 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                />
+              </svg>
+            ),
+          },
+          {
+            id: "leads",
+            label: "Leads",
+            icon: (
+              <svg
+                className="w-4.5 h-4.5 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+            ),
+          },
+          {
+            id: "follow-ups",
+            label: "Follow-ups",
+            icon: (
+              <svg
+                className="w-4.5 h-4.5 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            ),
+          },
+        ]
+      : []),
   ];
 
   const featureItems = [

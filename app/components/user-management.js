@@ -19,7 +19,7 @@ export default function UserManagement({ user: currentUser }) {
   const [newUserName, setNewUserName] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
-  const [newUserRole, setNewUserRole] = useState("user");
+  const [newUserRole, setNewUserRole] = useState("employee");
   const [isCreatingUser, setIsCreatingUser] = useState(false);
 
   useEffect(() => {
@@ -114,7 +114,7 @@ export default function UserManagement({ user: currentUser }) {
         setNewUserName("");
         setNewUserEmail("");
         setNewUserPassword("");
-        setNewUserRole("user");
+        setNewUserRole("employee");
       } else {
         setError(res.error || "Failed to create user.");
       }
@@ -381,10 +381,10 @@ export default function UserManagement({ user: currentUser }) {
             className="h-10 px-3 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 bg-white outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10 transition-all cursor-pointer min-w-35"
           >
             <option value="all">All Roles</option>
-            <option value="admin">Admin</option>
+            <option value="employee">Employee (Default)</option>
+            <option value="designer">Graphic Designer</option>
             <option value="manager">Manager</option>
-            <option value="employee">Employee</option>
-            <option value="user">User (Default)</option>
+            <option value="admin">Admin</option>
           </select>
         </div>
       </div>
@@ -546,12 +546,12 @@ export default function UserManagement({ user: currentUser }) {
                               ? "bg-sky-50 text-sky-600 border border-sky-100"
                               : currentRole === "manager"
                                 ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
-                                : currentRole === "employee"
-                                  ? "bg-purple-50 text-purple-600 border border-purple-100"
-                                  : "bg-blue-50 text-blue-600 border border-blue-100"
+                                : currentRole === "designer"
+                                  ? "bg-pink-50 text-pink-600 border border-pink-100"
+                                  : "bg-purple-50 text-purple-600 border border-purple-100"
                           }`}
                         >
-                          {currentRole}
+                          {currentRole === "designer" ? "Graphic Designer" : (currentRole || "employee")}
                         </span>
                       </td>
 
@@ -570,8 +570,8 @@ export default function UserManagement({ user: currentUser }) {
                                 : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 focus:border-sky-500 cursor-pointer"
                             }`}
                           >
-                            <option value="user">User (Default)</option>
-                            <option value="employee">Employee</option>
+                            <option value="employee">Employee (Default)</option>
+                            <option value="designer">Graphic Designer</option>
                             <option value="manager">Manager</option>
                             <option value="admin">Admin</option>
                           </select>
@@ -779,8 +779,8 @@ export default function UserManagement({ user: currentUser }) {
                   onChange={(e) => setNewUserRole(e.target.value)}
                   className="w-full h-10 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10 outline-none transition-all bg-white cursor-pointer"
                 >
-                  <option value="user">User (Standard)</option>
-                  <option value="employee">Employee</option>
+                  <option value="employee">Employee (Default)</option>
+                  <option value="designer">Graphic Designer</option>
                   <option value="manager">Manager</option>
                   <option value="admin">Admin</option>
                 </select>

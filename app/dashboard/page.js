@@ -11,6 +11,8 @@ import ReportsView from "../components/reports-view";
 import SettingsView from "../components/settings-view";
 import UserManagement from "../components/user-management";
 import IncomingLeadsView from "../components/incoming-leads-view";
+import ChatView from "../components/chat-view";
+import DesignProjectsView from "../components/design-projects-view";
 import { API_BASE_URL } from "../../lib/apiConfig";
 
 export default function Dashboard() {
@@ -37,6 +39,7 @@ export default function Dashboard() {
   const [users, setUsers] = useState([]);
   const [todos, setTodos] = useState([]);
   const [newTodoText, setNewTodoText] = useState("");
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
 
   const fetchUsers = useCallback(
     async (currentUser) => {
@@ -52,6 +55,16 @@ export default function Dashboard() {
         const data = await response.json();
         if (data.success) {
           setUsers(data.users);
+          const myProfile = data.users.find(
+            (u) =>
+              (activeUser?.email && u.email?.toLowerCase() === activeUser.email.toLowerCase()) ||
+              (activeUser?.id && String(u._id) === String(activeUser.id))
+          );
+          if (myProfile && myProfile.role && myProfile.role !== activeUser?.role) {
+            const updatedUser = { ...activeUser, role: myProfile.role, name: myProfile.name || activeUser.name };
+            setUser(updatedUser);
+            localStorage.setItem("user", JSON.stringify(updatedUser));
+          }
         }
       } catch (error) {
         console.error("Error fetching users:", error);
@@ -121,6 +134,9 @@ export default function Dashboard() {
     } else {
       try {
         const parsedUser = JSON.parse(storedUser);
+        if (parsedUser?.role === "designer" && activeTab === "dashboard") {
+          setActiveTab("design-projects");
+        }
         setUser((prev) => {
           if (
             prev &&
@@ -198,7 +214,7 @@ export default function Dashboard() {
     };
   }, [user, sendPresenceStatus]);
 
-  // Redirect non-admins away from user management and recycle bin tabs
+  // Redirect non-admins away from user management and recycle bin tabs, and designers away from lead tabs
   useEffect(() => {
     if (
       (activeTab === "users" || activeTab === "recycle-bin") &&
@@ -206,6 +222,14 @@ export default function Dashboard() {
       user.role !== "admin"
     ) {
       setActiveTab("dashboard");
+    }
+
+    if (
+      (activeTab === "dashboard" || activeTab === "incoming-leads" || activeTab === "leads" || activeTab === "follow-ups" || activeTab === "recycle-bin" || activeTab === "users") &&
+      user &&
+      user.role === "designer"
+    ) {
+      setActiveTab("design-projects");
     }
   }, [activeTab, user]);
 
@@ -485,6 +509,15 @@ export default function Dashboard() {
         );
       case "follow-ups":
         return <FollowUpsView user={user} />;
+      case "design-projects":
+        return <DesignProjectsView user={user} users={users} />;
+      case "chat":
+        return (
+          <ChatView
+            user={user}
+            onUnreadCountChange={(count) => setUnreadChatCount(count)}
+          />
+        );
       case "reports":
         return <ReportsView user={user} />;
       case "settings":
@@ -525,6 +558,7 @@ export default function Dashboard() {
           setActiveTab(tab);
           closeMobileMenu();
         }}
+        unreadChatCount={unreadChatCount}
       />
 
       {/* Main Container */}
@@ -542,6 +576,7 @@ export default function Dashboard() {
           isMobileOpen={isMobileMenuOpen}
           onCloseMobile={closeMobileMenu}
           incomingCount={incomingCount}
+          unreadChatCount={unreadChatCount}
         />
 
         {/* Scrollable Main Console */}

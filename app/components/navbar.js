@@ -7,6 +7,7 @@ const Navbar = ({
   onToggleMobileMenu,
   leads = [],
   setActiveTab,
+  unreadChatCount = 0,
 }) => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [followUps, setFollowUps] = useState([]);
@@ -72,9 +73,11 @@ const Navbar = ({
 
   const hasNotifications = followUps.length > 0;
 
+  const isDesigner = user?.role === "designer";
+
   // Filtered Leads & Navigation items for search
   const filteredLeads =
-    searchTerm.trim() === ""
+    searchTerm.trim() === "" || isDesigner
       ? []
       : (leads || [])
           .filter((lead) => {
@@ -91,8 +94,14 @@ const Navbar = ({
 
   const navOptions = [
     { id: "dashboard", label: "Dashboard Overview" },
-    { id: "leads", label: "Leads Manager" },
-    { id: "follow-ups", label: "Follow-ups" },
+    { id: "chat", label: "Messages & Chat" },
+    { id: "design-projects", label: "Design Projects" },
+    ...(!isDesigner
+      ? [
+          { id: "leads", label: "Leads Manager" },
+          { id: "follow-ups", label: "Follow-ups" },
+        ]
+      : []),
     { id: "reports", label: "Reports & Analytics" },
     ...(user?.role === "admin"
       ? [{ id: "users", label: "User Authorization & Management" }]
@@ -344,6 +353,32 @@ const Navbar = ({
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
+          </button>
+
+          {/* Chat / Messages Button with badge */}
+          <button
+            onClick={() => setActiveTab && setActiveTab("chat")}
+            title="Messages & Chat"
+            className="hover:text-white transition-colors p-1 relative cursor-pointer"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+            {unreadChatCount > 0 && (
+              <span className="bg-rose-500 text-white text-[9px] font-black h-4 px-1 rounded-full absolute -top-1 -right-1 flex items-center justify-center border border-[#1e293b] animate-bounce">
+                {unreadChatCount}
+              </span>
+            )}
           </button>
 
           {/* Settings Button */}

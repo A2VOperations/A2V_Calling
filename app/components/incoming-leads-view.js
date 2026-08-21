@@ -393,12 +393,15 @@ export default function IncomingLeadsView({
             return (
               <div
                 key={leadId}
-                className={`bg-white border rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between gap-4 relative group ${
+                className={`border rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between gap-4 relative group overflow-hidden ${
                   isSelected
-                    ? "border-blue-400 ring-2 ring-blue-400/20 bg-blue-50/20"
-                    : "border-slate-200/90 hover:border-blue-300"
+                    ? "border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/40"
+                    : lead.handledBy
+                    ? "border-emerald-200/90 bg-gradient-to-b from-emerald-50/30 via-white to-white hover:border-emerald-300"
+                    : "border-blue-200/90 bg-gradient-to-b from-blue-50/30 via-white to-white hover:border-blue-300"
                 }`}
               >
+                <div className={`absolute top-0 left-0 right-0 h-1.5 ${lead.handledBy ? "bg-emerald-500" : "bg-blue-500 animate-pulse"}`} />
                 {/* Header Row */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">

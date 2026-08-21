@@ -122,7 +122,7 @@ export default function LeadsManager({
   };
 
   // Search and filter states
-  const [quickFilterTab] = useState(initialFilter); // 'all', 'incoming', 'my-handled'
+  const [quickFilterTab] = useState(initialFilter);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
@@ -914,44 +914,183 @@ export default function LeadsManager({
     );
   };
 
-  // Rendering Status Badges
+  const getStatusDotColor = (status) => {
+    switch (status) {
+      case "Incoming":
+        return "bg-blue-500";
+      case "Active":
+      case "Accepted":
+        return "bg-sky-500";
+      case "New":
+        return "bg-emerald-500";
+      case "Contacted":
+      case "In Progress":
+        return "bg-indigo-500";
+      case "Follow-up":
+      case "Follow-up Required":
+        return "bg-purple-500";
+      case "Interested":
+      case "Converted":
+        return "bg-green-500";
+      case "No Answer":
+        return "bg-rose-500";
+      case "Recycled":
+        return "bg-amber-500";
+      default:
+        return "bg-slate-400";
+    }
+  };
+
+  const getLeadCardStyles = (status) => {
+    const s = (status || "Incoming").trim();
+    switch (s) {
+      case "Incoming":
+        return {
+          topBar: "bg-blue-500",
+          border: "border-blue-200/90",
+          cardBg: "bg-gradient-to-b from-blue-50/40 via-white to-white",
+          glow: "hover:border-blue-400 hover:shadow-blue-500/10",
+        };
+      case "Active":
+      case "Accepted":
+        return {
+          topBar: "bg-sky-500",
+          border: "border-sky-200/90",
+          cardBg: "bg-gradient-to-b from-sky-50/40 via-white to-white",
+          glow: "hover:border-sky-400 hover:shadow-sky-500/10",
+        };
+      case "New":
+        return {
+          topBar: "bg-emerald-500",
+          border: "border-emerald-200/90",
+          cardBg: "bg-gradient-to-b from-emerald-50/40 via-white to-white",
+          glow: "hover:border-emerald-400 hover:shadow-emerald-500/10",
+        };
+      case "Contacted":
+        return {
+          topBar: "bg-indigo-500",
+          border: "border-indigo-200/90",
+          cardBg: "bg-gradient-to-b from-indigo-50/40 via-white to-white",
+          glow: "hover:border-indigo-400 hover:shadow-indigo-500/10",
+        };
+      case "In Progress":
+        return {
+          topBar: "bg-cyan-500",
+          border: "border-cyan-200/90",
+          cardBg: "bg-gradient-to-b from-cyan-50/40 via-white to-white",
+          glow: "hover:border-cyan-400 hover:shadow-cyan-500/10",
+        };
+      case "Follow-up":
+      case "Follow-up Required":
+        return {
+          topBar: "bg-purple-500",
+          border: "border-purple-200/90",
+          cardBg: "bg-gradient-to-b from-purple-50/40 via-white to-white",
+          glow: "hover:border-purple-400 hover:shadow-purple-500/10",
+        };
+      case "Interested":
+      case "Converted":
+        return {
+          topBar: "bg-green-500",
+          border: "border-green-200/90",
+          cardBg: "bg-gradient-to-b from-green-50/40 via-white to-white",
+          glow: "hover:border-green-400 hover:shadow-green-500/10",
+        };
+      case "No Answer":
+        return {
+          topBar: "bg-rose-500",
+          border: "border-rose-200/90",
+          cardBg: "bg-gradient-to-b from-rose-50/40 via-white to-white",
+          glow: "hover:border-rose-400 hover:shadow-rose-500/10",
+        };
+      case "Recycled":
+        return {
+          topBar: "bg-amber-500",
+          border: "border-amber-200/90",
+          cardBg: "bg-gradient-to-b from-amber-50/40 via-white to-white",
+          glow: "hover:border-amber-400 hover:shadow-amber-500/10",
+        };
+      default:
+        return {
+          topBar: "bg-slate-400",
+          border: "border-slate-200",
+          cardBg: "bg-white",
+          glow: "hover:border-slate-300",
+        };
+    }
+  };
+
+  // Rendering Status Badges with visual status lead indication
   const renderStatusBadge = (status) => {
-    let styles = "bg-slate-100 text-slate-600 border-slate-200/80";
+    let styles = "bg-slate-100 text-slate-700 border-slate-200/80";
+    let dotColor = "bg-slate-400";
     let Icon = Sparkles;
 
-    if (status === "Incoming") {
+    const normalized = (status || "Incoming").trim();
+
+    if (normalized === "Incoming") {
       styles =
-        "bg-blue-50 text-blue-700 border-blue-200/80 ring-1 ring-blue-500/10 animate-pulse";
+        "bg-blue-50 text-blue-700 border-blue-200/80 ring-1 ring-blue-500/10";
+      dotColor = "bg-blue-500 animate-pulse";
       Icon = Sparkles;
-    } else if (status === "Active") {
+    } else if (normalized === "Active" || normalized === "Accepted") {
       styles =
         "bg-sky-50 text-sky-700 border-sky-200/70 ring-1 ring-sky-500/10";
+      dotColor = "bg-sky-500";
       Icon = CheckCircle2;
-    } else if (status === "Contacted") {
+    } else if (normalized === "Contacted") {
       styles =
-        "bg-blue-50 text-blue-700 border-blue-200/70 ring-1 ring-blue-500/10";
+        "bg-indigo-50 text-indigo-700 border-indigo-200/70 ring-1 ring-indigo-500/10";
+      dotColor = "bg-indigo-500";
       Icon = Clock;
-    } else if (status === "New") {
+    } else if (normalized === "In Progress") {
+      styles =
+        "bg-cyan-50 text-cyan-700 border-cyan-200/70 ring-1 ring-cyan-500/10";
+      dotColor = "bg-cyan-500";
+      Icon = Clock;
+    } else if (normalized === "New") {
       styles =
         "bg-emerald-50 text-emerald-700 border-emerald-200/70 ring-1 ring-emerald-500/10";
+      dotColor = "bg-emerald-500";
       Icon = Sparkles;
-    } else if (status === "Follow-up Required" || status === "Follow-up") {
+    } else if (
+      normalized === "Follow-up Required" ||
+      normalized === "Follow-up"
+    ) {
       styles =
-        "bg-purple-50 text-purple-700 text-center border-purple-200/70 ring-1 ring-purple-500/10";
+        "bg-purple-50 text-purple-700 border-purple-200/70 ring-1 ring-purple-500/10";
+      dotColor = "bg-purple-500";
       Icon = AlertCircle;
-    } else if (status === "No Answer") {
+    } else if (normalized === "Interested" || normalized === "Converted") {
+      styles =
+        "bg-green-50 text-green-700 border-green-200/70 ring-1 ring-green-500/10";
+      dotColor = "bg-green-500";
+      Icon = CheckCircle2;
+    } else if (normalized === "Not Interested" || normalized === "Closed") {
+      styles =
+        "bg-slate-100 text-slate-600 border-slate-200/70 ring-1 ring-slate-500/10";
+      dotColor = "bg-slate-400";
+      Icon = XCircle;
+    } else if (normalized === "No Answer") {
       styles =
         "bg-rose-50 text-rose-700 border-rose-200/70 ring-1 ring-rose-500/10";
+      dotColor = "bg-rose-500";
       Icon = XCircle;
+    } else if (normalized === "Recycled") {
+      styles =
+        "bg-amber-50 text-amber-700 border-amber-200/70 ring-1 ring-amber-500/10";
+      dotColor = "bg-amber-500";
+      Icon = AlertCircle;
     }
 
     const displayStatus =
-      status === "Follow-up Required" ? "Follow-up" : status || "Incoming";
+      normalized === "Follow-up Required" ? "Follow-up" : normalized;
 
     return (
       <span
         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all ${styles}`}
       >
+        <span className={`w-2 h-2 rounded-full shrink-0 ${dotColor}`} />
         <Icon className="w-3 h-3 shrink-0" />
         <span>{displayStatus}</span>
       </span>
@@ -965,8 +1104,14 @@ export default function LeadsManager({
     if (col.key === "name") {
       return (
         <div className="flex items-center gap-3 min-w-42.5">
-          <div className="w-8 h-8 rounded-full bg-sky-600 text-white flex items-center justify-center font-extrabold text-xs shadow-xs shrink-0">
-            {(val || "L").substring(0, 2).toUpperCase()}
+          <div className="relative shrink-0">
+            <div className="w-8 h-8 rounded-full bg-sky-600 text-white flex items-center justify-center font-extrabold text-xs shadow-xs">
+              {(val || "L").substring(0, 2).toUpperCase()}
+            </div>
+            <span
+              className={`w-2.5 h-2.5 rounded-full absolute -bottom-0.5 -right-0.5 border-2 border-white ${getStatusDotColor(lead.status)}`}
+              title={`Lead Status: ${lead.status || "Incoming"}`}
+            />
           </div>
           <div className="flex flex-col min-w-0">
             <span
@@ -1314,7 +1459,8 @@ export default function LeadsManager({
         ? 80
         : formValues.status === "Contacted"
           ? 45
-          : formValues.status === "Follow-up Required" || formValues.status === "Follow-up"
+          : formValues.status === "Follow-up Required" ||
+              formValues.status === "Follow-up"
             ? 60
             : formValues.status === "No Answer"
               ? 0
@@ -2392,19 +2538,28 @@ export default function LeadsManager({
         /* Visual Card Grid View */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {filteredLeads.length > 0 ? (
-            filteredLeads.map((lead) => (
-              <div
-                key={lead.id}
-                className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-4 group relative overflow-hidden"
-              >
-                <div className="absolute top-0 left-0 right-0 h-1.5 bg-sky-600" />
+            filteredLeads.map((lead) => {
+              const cardStyle = getLeadCardStyles(lead.status);
+
+              return (
+                <div
+                  key={lead.id}
+                  className={`border ${cardStyle.border} ${cardStyle.cardBg} ${cardStyle.glow} rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-4 group relative overflow-hidden`}
+                >
+                  <div className={`absolute top-0 left-0 right-0 h-1.5 ${cardStyle.topBar}`} />
 
                 <div className="flex flex-col gap-3">
                   {/* Card Top Row: Avatar & Status */}
                   <div className="flex items-start justify-between gap-3 pt-1">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-sky-600 text-white flex items-center justify-center font-extrabold text-sm shadow-md shadow-sky-600/20 shrink-0">
-                        {(lead.name || "L").substring(0, 2).toUpperCase()}
+                      <div className="relative shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-sky-600 text-white flex items-center justify-center font-extrabold text-sm shadow-md shadow-sky-600/20">
+                          {(lead.name || "L").substring(0, 2).toUpperCase()}
+                        </div>
+                        <span
+                          className={`w-3 h-3 rounded-full absolute -bottom-0.5 -right-0.5 border-2 border-white ${getStatusDotColor(lead.status)}`}
+                          title={`Lead Status: ${lead.status || "Incoming"}`}
+                        />
                       </div>
                       <div>
                         <h3
@@ -2613,7 +2768,8 @@ export default function LeadsManager({
                   </button>
                 </div>
               </div>
-            ))
+            );
+          })
           ) : (
             <div className="col-span-full py-12 text-center bg-white border border-slate-200/80 rounded-2xl flex flex-col items-center justify-center gap-2">
               <Search className="w-8 h-8 text-slate-300 stroke-1" />
@@ -3728,9 +3884,7 @@ export default function LeadsManager({
                         <option value="New">New</option>
                         <option value="Active">Active</option>
                         <option value="Contacted">Contacted</option>
-                        <option value="Follow-up">
-                          Follow-up
-                        </option>
+                        <option value="Follow-up">Follow-up</option>
                         <option value="No Answer">No Answer</option>
                       </select>
                     </div>

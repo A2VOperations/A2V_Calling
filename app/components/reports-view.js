@@ -29,6 +29,9 @@ export default function ReportsView({ user: currentUser }) {
       ? JSON.parse(localStorage.getItem("user"))
       : null);
   const isAdmin = loggedInUser?.role === "admin";
+  const isDesigner = loggedInUser?.role === "designer";
+  const [reportMode, setReportMode] = useState(() => (isDesigner ? "design" : "sales"));
+  const [designProjects, setDesignProjects] = useState([]);
 
   const [users, setUsers] = useState([]);
   const [leads, setLeads] = useState([]);
@@ -66,7 +69,7 @@ export default function ReportsView({ user: currentUser }) {
     setError("");
     try {
       const userId = loggedInUser?.id || loggedInUser?._id || loggedInUser?.email || "";
-      const [usersRes, leadsRes, followUpsRes] = await Promise.all([
+      const [usersRes, leadsRes, followUpsRes, designRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/users`, {
           headers: { "x-user-id": userId },
         })
@@ -78,6 +81,11 @@ export default function ReportsView({ user: currentUser }) {
           .then((res) => res.json())
           .catch(() => ({ success: false })),
         fetch(`${API_BASE_URL}/api/followups`)
+          .then((res) => res.json())
+          .catch(() => ({ success: false })),
+        fetch(`${API_BASE_URL}/api/design-projects`, {
+          headers: { "x-user-id": userId, "x-user-role": loggedInUser?.role || "" },
+        })
           .then((res) => res.json())
           .catch(() => ({ success: false })),
       ]);
@@ -102,6 +110,10 @@ export default function ReportsView({ user: currentUser }) {
 
       if (followUpsRes.success) {
         setFollowUps(followUpsRes.followUps || []);
+      }
+
+      if (designRes?.success) {
+        setDesignProjects(designRes.projects || []);
       }
     } catch (err) {
       console.error("Error loading report data:", err);
@@ -159,7 +171,7 @@ export default function ReportsView({ user: currentUser }) {
         return;
       if (!seen.has(key)) {
         seen.add(key);
-        result.push({ _id: str, name: str, email: str, role: "user" });
+        result.push({ _id: str, name: str, email: str, role: "employee" });
       }
     };
 
@@ -367,7 +379,7 @@ export default function ReportsView({ user: currentUser }) {
           user: usr,
           name: usr.name || "User",
           email: usr.email || "",
-          role: usr.role || "user",
+          role: usr.role || "employee",
           monthLeadsCount: monthLeads.length,
           totalLeadsCount: totalLeads.length,
           monthFollowUpsCount: monthFollowUps.length,
@@ -448,7 +460,7 @@ export default function ReportsView({ user: currentUser }) {
           user: usr,
           name: usr.name || "User",
           email: usr.email || "",
-          role: usr.role || "user",
+          role: usr.role || "employee",
           monthHandledCount: monthHandledLeads.length,
           totalHandledCount: totalHandledLeads.length,
           activeHandledCount: activeHandledLeads.length,
@@ -502,12 +514,68 @@ export default function ReportsView({ user: currentUser }) {
     return monthlyDays.find((d) => d.dateStr === selectedDayDetail);
   }, [selectedDayDetail, monthlyDays]);
 
+  // Graphic Design Performance & Analytics computation
+  const designStats = useMemo(() => {
+    let filtered = designProjects;
+    if (selectedUser !== "all") {
+      filtered = designProjects.filter(
+        (p) =>
+          (p.assignedToName && p.assignedToName.toLowerCase() === selectedUser.toLowerCase()) ||
+          (p.assignedToEmail && p.assignedToEmail.toLowerCase() === selectedUser.toLowerCase())
+      );
+    }
+
+    const total = filtered.length;
+    const completed = filtered.filter((p) => p.status === "Completed").length;
+    const inProgress = filtered.filter((p) => p.status === "In Progress").length;
+    const inReview = filtered.filter((p) => p.status === "In Review").length;
+
+    let totalSteps = 0;
+    let approvedSteps = 0;
+    let submittedSteps = 0;
+    let revisionSteps = 0;
+    let totalSubmissions = 0;
+
+    filtered.forEach((p) => {
+      if (Array.isArray(p.steps)) {
+        totalSteps += p.steps.length;
+        p.steps.forEach((s) => {
+          if (s.status === "Approved") approvedSteps++;
+          if (s.status === "Submitted") submittedSteps++;
+          if (s.status === "Revision Requested") revisionSteps++;
+          if (Array.isArray(s.submissions)) {
+            totalSubmissions += s.submissions.length;
+          }
+        });
+      }
+    });
+
+    const approvalRate =
+      approvedSteps + revisionSteps > 0
+        ? Math.round((approvedSteps / (approvedSteps + revisionSteps)) * 100)
+        : 100;
+
+    return {
+      filtered,
+      total,
+      completed,
+      inProgress,
+      inReview,
+      totalSteps,
+      approvedSteps,
+      submittedSteps,
+      revisionSteps,
+      totalSubmissions,
+      approvalRate,
+    };
+  }, [designProjects, selectedUser]);
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-100 gap-3">
         <RefreshCw className="w-8 h-8 text-sky-500 animate-spin" />
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-          Fetching User Activeness & Daily Reports...
+          Fetching Performance & Work Analytics...
         </p>
       </div>
     );
@@ -524,18 +592,45 @@ export default function ReportsView({ user: currentUser }) {
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-                User Activeness & Daily Reports
+                {reportMode === "design" ? "Graphic Design Work Analytics" : "User Activeness & Daily Reports"}
               </h1>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Track leads added, follow-ups completed, and daily activities
-                breakdown per month
+                {reportMode === "design"
+                  ? "Track design projects, step completion rate, work progress submissions, and approval velocity"
+                  : "Track leads added, follow-ups completed, and daily activities breakdown per month"}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Global Controls & Filters */}
+        {/* Mode Switcher & Filters */}
         <div className="flex flex-wrap items-center gap-3">
+          {/* Report Type Selector Pills */}
+          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+            {!isDesigner && (
+              <button
+                onClick={() => setReportMode("sales")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  reportMode === "sales"
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                📊 Sales & Lead Reports
+              </button>
+            )}
+            <button
+              onClick={() => setReportMode("design")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                reportMode === "design"
+                  ? "bg-sky-600 text-white shadow-xs"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              🎨 Graphic Design Reports
+            </button>
+          </div>
+
           {/* User Selector Dropdown (Admin Only) */}
           {isAdmin ? (
             <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700">
@@ -548,7 +643,7 @@ export default function ReportsView({ user: currentUser }) {
                 <option value="all">All Team Members</option>
                 {allUserOptions.map((u) => (
                   <option key={u._id || u.email} value={u.name || u.email}>
-                    {u.name} ({u.role || "user"})
+                    {u.name} ({u.role || "employee"})
                   </option>
                 ))}
               </select>
@@ -592,6 +687,153 @@ export default function ReportsView({ user: currentUser }) {
           <span>{error}</span>
         </div>
       )}
+
+      {/* ======================================================== */}
+      {/* GRAPHIC DESIGN REPORTS MODE */}
+      {/* ======================================================== */}
+      {reportMode === "design" ? (
+        <div className="flex flex-col gap-6 animate-fade-in">
+          {/* Design KPI Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Design Projects</span>
+                <div className="p-2 bg-sky-50 text-sky-600 rounded-xl text-base font-bold">🎨</div>
+              </div>
+              <div className="mt-3">
+                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">{designStats.total}</span>
+                <span className="text-xs font-medium text-slate-400 ml-2">projects total</span>
+              </div>
+              <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold text-slate-500">
+                <span>Completed: {designStats.completed}</span>
+                <span className="text-sky-600 font-bold">Active: {designStats.inProgress}</span>
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Steps Approved</span>
+                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl text-base font-bold">✅</div>
+              </div>
+              <div className="mt-3">
+                <span className="text-3xl font-extrabold text-emerald-600 tracking-tight">{designStats.approvedSteps}</span>
+                <span className="text-xs font-medium text-slate-400 ml-2">/ {designStats.totalSteps} total steps</span>
+              </div>
+              <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold text-slate-500">
+                <span>Pending Review</span>
+                <span className="text-amber-600 font-bold">{designStats.submittedSteps} steps</span>
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Work Submissions</span>
+                <div className="p-2 bg-purple-50 text-purple-600 rounded-xl text-base font-bold">📦</div>
+              </div>
+              <div className="mt-3">
+                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">{designStats.totalSubmissions}</span>
+                <span className="text-xs font-medium text-slate-400 ml-2">deliveries</span>
+              </div>
+              <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold text-slate-500">
+                <span>Revisions Requested</span>
+                <span className="text-rose-600 font-bold">{designStats.revisionSteps}</span>
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Approval Rate</span>
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl text-base font-bold">🎯</div>
+              </div>
+              <div className="mt-3">
+                <span className="text-3xl font-extrabold text-indigo-600 tracking-tight">{designStats.approvalRate}%</span>
+                <span className="text-xs font-medium text-slate-400 ml-2">first time approval</span>
+              </div>
+              <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold text-slate-500">
+                <span>Quality Score</span>
+                <span className="text-emerald-600 font-bold">
+                  {designStats.approvalRate >= 80 ? "⭐ Excellent" : "👍 Good"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Design Projects Breakdown Table */}
+          <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                <span>🎨 Graphic Design Projects & Step Progress</span>
+              </h3>
+              <span className="text-xs font-semibold text-slate-400">
+                {designStats.filtered.length} Projects Total
+              </span>
+            </div>
+
+            {designStats.filtered.length === 0 ? (
+              <div className="p-8 text-center text-slate-400 text-xs font-semibold">
+                No graphic design projects found for the selected user/filter.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <th className="p-3">Project Title</th>
+                      <th className="p-3">Client</th>
+                      <th className="p-3">Assigned Designer</th>
+                      <th className="p-3 text-center">Step Progress</th>
+                      <th className="p-3 text-center">Deliveries</th>
+                      <th className="p-3 text-center">Priority</th>
+                      <th className="p-3 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+                    {designStats.filtered.map((proj) => {
+                      const approvedCount = proj.steps?.filter((s) => s.status === "Approved").length || 0;
+                      const totalSteps = proj.steps?.length || 1;
+                      const pct = Math.round((approvedCount / totalSteps) * 100);
+                      const subCount = proj.steps?.reduce((sum, s) => sum + (s.submissions?.length || 0), 0) || 0;
+
+                      return (
+                        <tr key={proj._id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="p-3 font-bold text-slate-900">{proj.title}</td>
+                          <td className="p-3 text-slate-500">{proj.clientName || "N/A"}</td>
+                          <td className="p-3">{proj.assignedToName || "Designer"}</td>
+                          <td className="p-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-gradient-to-r from-sky-500 to-emerald-500" style={{ width: `${pct}%` }} />
+                              </div>
+                              <span className="text-[11px] font-bold text-slate-600">{approvedCount}/{totalSteps}</span>
+                            </div>
+                          </td>
+                          <td className="p-3 text-center">
+                            <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-bold">
+                              {subCount} entries
+                            </span>
+                          </td>
+                          <td className="p-3 text-center">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              proj.priority === "Urgent" ? "bg-rose-100 text-rose-700" : "bg-slate-100 text-slate-600"
+                            }`}>{proj.priority}</span>
+                          </td>
+                          <td className="p-3 text-center">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                              proj.status === "Completed" ? "bg-emerald-100 text-emerald-700" : "bg-sky-100 text-sky-700"
+                            }`}>{proj.status}</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* SALES & LEADS REPORTS MODE */
+        <>
 
       {/* KPI Summary Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1247,6 +1489,8 @@ export default function ReportsView({ user: currentUser }) {
           </p>
         </div>
       )}
+    </>
+  )}
 
       {/* FULL-SCREEN DAY DETAIL MODAL */}
       {selectedDayObj &&
