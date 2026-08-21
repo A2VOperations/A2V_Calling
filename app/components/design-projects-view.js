@@ -417,7 +417,7 @@ export default function DesignProjectsView({ user, users = [] }) {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-amber-200/80 bg-amber-50/20 shadow-xs flex items-center gap-4">
+        <div className="p-4 rounded-2xl border border-amber-200/80 bg-amber-50/20 shadow-xs flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg font-black">
             ⏳
           </div>
@@ -560,7 +560,7 @@ export default function DesignProjectsView({ user, users = [] }) {
                     </div>
                     <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-sky-500 to-indigo-500 transition-all duration-500"
+                        className="h-full bg-linear-to-r from-sky-500 to-indigo-500 transition-all duration-500"
                         style={{ width: `${progressPercent}%` }}
                       />
                     </div>
@@ -594,7 +594,7 @@ export default function DesignProjectsView({ user, users = [] }) {
                     <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-700 text-[10px]">
                       {project.assignedToName?.charAt(0).toUpperCase() || "D"}
                     </div>
-                    <span className="truncate max-w-[110px]">{project.assignedToName || "Designer"}</span>
+                    <span className="truncate max-w-27.5">{project.assignedToName || "Designer"}</span>
                   </div>
 
                   {project.dueDate ? (

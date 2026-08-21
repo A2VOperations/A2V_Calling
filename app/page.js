@@ -88,7 +88,7 @@ export default function Home() {
     <main className="flex flex-col flex-1 items-center justify-center min-h-screen bg-slate-50 px-4 py-12 font-sans text-slate-800">
 
       {/* Container Card */}
-      <div className="w-full max-w-[420px] flex flex-col items-center">
+      <div className="w-full max-w-105 flex flex-col items-center">
 
         {/* Brand Header */}
         <div className="flex items-center gap-2.5 mb-6 select-none">
@@ -106,7 +106,7 @@ export default function Home() {
         </div>
 
         {/* Feedback Messages */}
-        <div className="w-full min-h-[44px] mb-3">
+        <div className="w-full min-h-11 mb-3">
           {error && (
             <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs font-semibold text-rose-700 text-center flex items-center justify-center gap-2 shadow-sm animate-fade-in">
               <svg className="w-4 h-4 text-rose-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

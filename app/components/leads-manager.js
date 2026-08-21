@@ -2791,9 +2791,9 @@ export default function LeadsManager({
           <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-9999 flex justify-end animate-fade-in">
             <div className="bg-white w-full max-w-md h-full shadow-2xl flex flex-col justify-between animate-slide-left border-l border-slate-200">
               {/* Premium Gradient Header */}
-              <div className="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 text-white p-6 flex items-start justify-between border-b border-slate-800 shadow-md">
+              <div className="bg-linear-to-r from-slate-900 via-slate-850 to-slate-900 text-white p-6 flex items-start justify-between border-b border-slate-800 shadow-md">
                 <div className="flex items-center gap-3.5">
-                  <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-sky-600 to-blue-500 text-white flex items-center justify-center font-black text-lg shadow-lg shadow-sky-500/25 border border-sky-400/30 shrink-0">
+                  <div className="w-13 h-13 rounded-2xl bg-linear-to-tr from-sky-600 to-blue-500 text-white flex items-center justify-center font-black text-lg shadow-lg shadow-sky-500/25 border border-sky-400/30 shrink-0">
                     {(quickViewLead.name || "L").substring(0, 2).toUpperCase()}
                   </div>
                   <div>
@@ -2846,7 +2846,7 @@ export default function LeadsManager({
                   <h4 className="font-bold uppercase text-[10px] tracking-wider text-slate-400">
                     Financial Breakdown
                   </h4>
-                  <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white p-4 rounded-2xl border border-slate-800 shadow-xl flex flex-col gap-3.5">
+                  <div className="bg-linear-to-br from-slate-900 to-slate-950 text-white p-4 rounded-2xl border border-slate-800 shadow-xl flex flex-col gap-3.5">
                     <div className="grid grid-cols-3 gap-2.5 text-center">
                       <div className="bg-white/5 border border-white/10 p-2.5 rounded-xl">
                         <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">
@@ -2902,7 +2902,7 @@ export default function LeadsManager({
                           </div>
                           <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden p-0.5">
                             <div
-                              className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
+                              className="h-full bg-linear-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500"
                               style={{ width: `${pct}%` }}
                             />
                           </div>
@@ -3309,7 +3309,7 @@ export default function LeadsManager({
                               key={item.id || idx}
                               className="relative group"
                             >
-                              <div className="absolute -left-[21px] top-1.5 w-3 h-3 rounded-full bg-white border-2 border-indigo-500 group-hover:scale-125 transition-transform" />
+                              <div className="absolute -left-5.25 top-1.5 w-3 h-3 rounded-full bg-white border-2 border-indigo-500 group-hover:scale-125 transition-transform" />
 
                               <div className="bg-slate-50/90 hover:bg-slate-50 border border-slate-200/80 rounded-2xl p-3 text-xs transition-all shadow-2xs">
                                 <div className="flex items-center justify-between gap-2 mb-1">
@@ -3370,7 +3370,7 @@ export default function LeadsManager({
                         status: "Active",
                       }));
                     }}
-                    className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-orange-500 hover:from-blue-600 hover:to-orange-600 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-orange-500/25 transition-all cursor-pointer flex items-center gap-1.5"
+                    className="px-5 py-2.5 bg-linear-to-r from-blue-500 to-orange-500 hover:from-blue-600 hover:to-orange-600 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-orange-500/25 transition-all cursor-pointer flex items-center gap-1.5"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Accept Lead Now</span>
@@ -4591,7 +4591,7 @@ export default function LeadsManager({
           <div className="fixed inset-0 z-99999 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
             <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-md overflow-hidden flex flex-col">
               {/* Modal Header */}
-              <div className="p-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex items-center justify-between">
+              <div className="p-6 bg-linear-to-r from-indigo-600 to-purple-600 text-white flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-white/20 backdrop-blur-md rounded-2xl">
                     <Send className="w-5 h-5 text-white" />
@@ -4765,7 +4765,7 @@ export default function LeadsManager({
           <div className="fixed inset-0 z-99999 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
             <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-md overflow-hidden flex flex-col">
               {/* Modal Header */}
-              <div className="p-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between">
+              <div className="p-6 bg-linear-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 bg-white/20 backdrop-blur-md rounded-2xl">
                     <Calendar className="w-5 h-5 text-white" />
@@ -4808,7 +4808,7 @@ export default function LeadsManager({
 
                 {/* Follow-Up Date & Time Input */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-blue-600" />
                     <span>Follow-Up Date & Time</span>
                     <span className="text-rose-500">*</span>
@@ -4828,7 +4828,7 @@ export default function LeadsManager({
 
                 {/* Follow-Up Description / Note */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 items-center gap-1.5">
                     <FileText className="w-3.5 h-3.5 text-blue-600" />
                     <span>Follow-Up Task / Note</span>
                   </label>

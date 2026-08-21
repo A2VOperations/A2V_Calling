@@ -802,7 +802,7 @@ export default function ReportsView({ user: currentUser }) {
                           <td className="p-3 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-sky-500 to-emerald-500" style={{ width: `${pct}%` }} />
+                                <div className="h-full bg-linear-to-r from-sky-500 to-emerald-500" style={{ width: `${pct}%` }} />
                               </div>
                               <span className="text-[11px] font-bold text-slate-600">{approvedCount}/{totalSteps}</span>
                             </div>

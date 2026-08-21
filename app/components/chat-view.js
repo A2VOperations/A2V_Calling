@@ -602,11 +602,11 @@ export default function ChatView({ user, onUnreadCountChange }) {
                         <div
                           className={`max-w-xs sm:max-w-md md:max-w-lg px-4 py-2.5 rounded-2xl text-xs leading-relaxed shadow-sm transition-all ${
                             isMe
-                              ? "bg-gradient-to-r from-blue-600 via-sky-600 to-indigo-600 text-white rounded-tr-xs border border-sky-400/30"
+                              ? "bg-linear-to-r from-blue-600 via-sky-600 to-indigo-600 text-white rounded-tr-xs border border-sky-400/30"
                               : "bg-white text-slate-800 border border-slate-200/90 rounded-tl-xs"
                           }`}
                         >
-                          <p className="whitespace-pre-wrap break-words font-medium">
+                          <p className="whitespace-pre-wrap wrap-break-word font-medium">
                             {msg.message}
                           </p>
                         </div>

@@ -397,8 +397,8 @@ export default function IncomingLeadsView({
                   isSelected
                     ? "border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/40"
                     : lead.handledBy
-                    ? "border-emerald-200/90 bg-gradient-to-b from-emerald-50/30 via-white to-white hover:border-emerald-300"
-                    : "border-blue-200/90 bg-gradient-to-b from-blue-50/30 via-white to-white hover:border-blue-300"
+                    ? "border-emerald-200/90 bg-linear-to-b from-emerald-50/30 via-white to-white hover:border-emerald-300"
+                    : "border-blue-200/90 bg-linear-to-b from-blue-50/30 via-white to-white hover:border-blue-300"
                 }`}
               >
                 <div className={`absolute top-0 left-0 right-0 h-1.5 ${lead.handledBy ? "bg-emerald-500" : "bg-blue-500 animate-pulse"}`} />
@@ -997,7 +997,7 @@ export default function IncomingLeadsView({
 
                           return (
                             <div key={item.id || idx} className="relative group">
-                              <div className="absolute -left-[21px] top-1.5 w-3 h-3 rounded-full bg-white border-2 border-indigo-500 group-hover:scale-125 transition-transform" />
+                              <div className="absolute -left-5.25 top-1.5 w-3 h-3 rounded-full bg-white border-2 border-indigo-500 group-hover:scale-125 transition-transform" />
 
                               <div className="bg-slate-50/90 hover:bg-slate-50 border border-slate-200/80 rounded-2xl p-3 text-xs transition-all shadow-2xs">
                                 <div className="flex items-center justify-between gap-2 mb-1">
