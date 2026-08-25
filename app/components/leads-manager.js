@@ -161,8 +161,12 @@ export default function LeadsManager({
           : null);
       const userId =
         currentUser?.id || currentUser?._id || currentUser?.email || "";
+      const userRole = currentUser?.role || "";
       const res = await fetch(`${API_BASE_URL}/api/leads/recycled`, {
-        headers: { "x-user-id": userId },
+        headers: {
+          "x-user-id": userId,
+          "x-user-role": userRole,
+        },
       });
       const contentType = res.headers.get("content-type");
       if (
@@ -1272,13 +1276,13 @@ export default function LeadsManager({
         ? JSON.parse(localStorage.getItem("user"))
         : null);
     setFormValues({
-      status: "New",
+      status: "Incoming",
       campaign: "Direct Outreach",
       progress: 10,
       leadDate: new Date().toISOString().split("T")[0],
       createdBy: currentUser?.name || currentUser?.email || "",
-      handledBy: currentUser?.name || currentUser?.email || "",
-      handledById: currentUser?.id || currentUser?._id || "",
+      handledBy: "",
+      handledById: "",
       totalAmount: "",
       paidAmount: "",
       balanceAmount: "",
@@ -3872,7 +3876,7 @@ export default function LeadsManager({
                         Status
                       </label>
                       <select
-                        value={formValues.status || "New"}
+                        value={formValues.status || "Incoming"}
                         onChange={(e) =>
                           setFormValues((prev) => ({
                             ...prev,
@@ -3881,11 +3885,56 @@ export default function LeadsManager({
                         }
                         className="w-full h-10 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10 outline-none transition-all bg-white cursor-pointer"
                       >
+                        <option value="Incoming">Incoming</option>
                         <option value="New">New</option>
                         <option value="Active">Active</option>
                         <option value="Contacted">Contacted</option>
                         <option value="Follow-up">Follow-up</option>
                         <option value="No Answer">No Answer</option>
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 tracking-wider uppercase pl-0.5">
+                        Handled By / Handler
+                      </label>
+                      <select
+                        value={formValues.handledBy || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const targetU = users.find(
+                            (u) => u.name === val || u.email === val,
+                          );
+                          setFormValues((prev) => ({
+                            ...prev,
+                            handledBy: val,
+                            handledById: targetU
+                              ? targetU.id || targetU._id
+                              : val && val === (user?.name || user?.email)
+                                ? user?.id || user?._id
+                                : "",
+                          }));
+                        }}
+                        className="w-full h-10 rounded-xl border border-slate-200 px-3 text-xs font-semibold text-slate-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/10 outline-none transition-all bg-white cursor-pointer"
+                      >
+                        <option value="">Unassigned (Incoming Lead)</option>
+                        {user && (
+                          <option value={user.name || user.email}>
+                            {user.name || user.email} (Me)
+                          </option>
+                        )}
+                        {users
+                          .filter(
+                            (u) =>
+                              (u.name || u.email) !== (user?.name || user?.email),
+                          )
+                          .map((u) => (
+                            <option
+                              key={u.id || u._id || u.email}
+                              value={u.name || u.email}
+                            >
+                              {u.name || u.email}
+                            </option>
+                          ))}
                       </select>
                     </div>
                     <div className="flex flex-col gap-1.5">
