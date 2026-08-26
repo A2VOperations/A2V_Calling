@@ -2550,230 +2550,234 @@ export default function LeadsManager({
                   key={lead.id}
                   className={`border ${cardStyle.border} ${cardStyle.cardBg} ${cardStyle.glow} rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-4 group relative overflow-hidden`}
                 >
-                  <div className={`absolute top-0 left-0 right-0 h-1.5 ${cardStyle.topBar}`} />
+                  <div
+                    className={`absolute top-0 left-0 right-0 h-1.5 ${cardStyle.topBar}`}
+                  />
 
-                <div className="flex flex-col gap-3">
-                  {/* Card Top Row: Avatar & Status */}
-                  <div className="flex items-start justify-between gap-3 pt-1">
-                    <div className="flex items-center gap-3">
-                      <div className="relative shrink-0">
-                        <div className="w-10 h-10 rounded-full bg-sky-600 text-white flex items-center justify-center font-extrabold text-sm shadow-md shadow-sky-600/20">
-                          {(lead.name || "L").substring(0, 2).toUpperCase()}
+                  <div className="flex flex-col gap-3">
+                    {/* Card Top Row: Avatar & Status */}
+                    <div className="flex items-start justify-between gap-3 pt-1">
+                      <div className="flex items-center gap-3">
+                        <div className="relative shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-sky-600 text-white flex items-center justify-center font-extrabold text-sm shadow-md shadow-sky-600/20">
+                            {(lead.name || "L").substring(0, 2).toUpperCase()}
+                          </div>
+                          <span
+                            className={`w-3 h-3 rounded-full absolute -bottom-0.5 -right-0.5 border-2 border-white ${getStatusDotColor(lead.status)}`}
+                            title={`Lead Status: ${lead.status || "Incoming"}`}
+                          />
                         </div>
-                        <span
-                          className={`w-3 h-3 rounded-full absolute -bottom-0.5 -right-0.5 border-2 border-white ${getStatusDotColor(lead.status)}`}
-                          title={`Lead Status: ${lead.status || "Incoming"}`}
-                        />
+                        <div>
+                          <h3
+                            onClick={() => setQuickViewLead(lead)}
+                            className="font-bold text-slate-900 text-sm hover:text-sky-600 cursor-pointer transition-colors"
+                          >
+                            {lead.name || "Unnamed Client"}
+                          </h3>
+                          {lead.businessName && (
+                            <p className="text-xs text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
+                              <Building2 className="w-3 h-3 text-slate-400" />
+                              {lead.businessName}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <h3
-                          onClick={() => setQuickViewLead(lead)}
-                          className="font-bold text-slate-900 text-sm hover:text-sky-600 cursor-pointer transition-colors"
+                      {renderStatusBadge(lead.status)}
+                    </div>
+
+                    {/* Lead Handler Status / Accept Lead Bar */}
+                    {lead.handledBy ? (
+                      <div className="flex items-center justify-between bg-emerald-50/80 border border-emerald-200/70 p-2 rounded-xl text-xs">
+                        <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">
+                          Handled By:
+                        </span>
+                        <span className="font-extrabold text-emerald-800 flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          {lead.handledBy}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between bg-blue-50/80 border border-blue-200/80 p-2 rounded-xl text-xs">
+                        <div className="flex items-center gap-1 text-blue-800 font-bold">
+                          <Sparkles className="w-3 h-3 text-blue-600 animate-pulse" />
+                          <span>Incoming</span>
+                        </div>
+                        <button
+                          onClick={() =>
+                            handleAcceptLead &&
+                            handleAcceptLead(lead.id || lead._id)
+                          }
+                          className="px-2.5 py-1 bg-blue-500 hover:bg-blue-600 active:scale-95 text-white font-bold text-[11px] rounded-lg shadow-xs cursor-pointer transition-all flex items-center gap-1"
                         >
-                          {lead.name || "Unnamed Client"}
-                        </h3>
-                        {lead.businessName && (
-                          <p className="text-xs text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
-                            <Building2 className="w-3 h-3 text-slate-400" />
-                            {lead.businessName}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {renderStatusBadge(lead.status)}
-                  </div>
-
-                  {/* Lead Handler Status / Accept Lead Bar */}
-                  {lead.handledBy ? (
-                    <div className="flex items-center justify-between bg-emerald-50/80 border border-emerald-200/70 p-2 rounded-xl text-xs">
-                      <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">
-                        Handled By:
-                      </span>
-                      <span className="font-extrabold text-emerald-800 flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                        {lead.handledBy}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between bg-blue-50/80 border border-blue-200/80 p-2 rounded-xl text-xs">
-                      <div className="flex items-center gap-1 text-blue-800 font-bold">
-                        <Sparkles className="w-3 h-3 text-blue-600 animate-pulse" />
-                        <span>Incoming</span>
-                      </div>
-                      <button
-                        onClick={() =>
-                          handleAcceptLead &&
-                          handleAcceptLead(lead.id || lead._id)
-                        }
-                        className="px-2.5 py-1 bg-blue-500 hover:bg-blue-600 active:scale-95 text-white font-bold text-[11px] rounded-lg shadow-xs cursor-pointer transition-all flex items-center gap-1"
-                      >
-                        <CheckCircle2 className="w-3 h-3" />
-                        <span>Accept Lead</span>
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Financial Summary Pill Bar inside Lead Card */}
-                  {(lead.paidAmount !== undefined ||
-                    lead.balanceAmount !== undefined ||
-                    lead.totalAmount !== undefined) && (
-                    <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs font-mono">
-                      <div className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50/80 px-2 py-1 rounded-lg border border-emerald-200/60">
-                        <span className="text-[10px] font-sans font-bold text-emerald-600 uppercase">
-                          Paid:
-                        </span>
-                        <span className="font-bold">
-                          ₹
-                          {(Number(lead.paidAmount) || 0).toLocaleString(
-                            "en-IN",
-                          )}
-                        </span>
-                      </div>
-                      <div
-                        className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border ${
-                          (Number(lead.balanceAmount) || 0) > 0
-                            ? "text-blue-700 bg-blue-50/80 border-blue-200/60"
-                            : "text-slate-600 bg-slate-100 border-slate-200"
-                        }`}
-                      >
-                        <span className="text-[10px] font-sans font-bold uppercase">
-                          Balance:
-                        </span>
-                        <span className="font-bold">
-                          ₹
-                          {(Number(lead.balanceAmount) || 0).toLocaleString(
-                            "en-IN",
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Contact Info Pills */}
-                  <div className="flex flex-col gap-2 pt-2 border-t border-slate-100 text-xs">
-                    {lead.phone && (
-                      <a
-                        href={`tel:${lead.phone}`}
-                        className="flex items-center gap-2 text-slate-600 font-bold"
-                      >
-                        <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span>{lead.phone}</span>
-                      </a>
-                    )}
-                    {lead.email && (
-                      <div className="flex items-center gap-2 text-slate-600 font-medium truncate">
-                        <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span className="truncate">{lead.email}</span>
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>Accept Lead</span>
+                        </button>
                       </div>
                     )}
-                    {lead.areaZone && (
-                      <div className="flex items-center gap-2 text-slate-500 font-medium">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span>Zone: {lead.areaZone}</span>
-                      </div>
-                    )}
-                    {lead.campaign && (
-                      <div className="flex items-center gap-2 text-slate-500 font-medium">
-                        <Tag className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span>Campaign: {lead.campaign}</span>
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Social Links Row */}
-                  <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                    {lead.googleMap &&
-                      renderUrlBadge("googleMap", lead.googleMap)}
-                    {lead.website && renderUrlBadge("website", lead.website)}
-                    {lead.instagram &&
-                      renderUrlBadge("instagram", lead.instagram)}
-                    {lead.facebook && renderUrlBadge("facebook", lead.facebook)}
-                    {lead.twitterX && renderUrlBadge("twitterX", lead.twitterX)}
-                    {lead.youtube && renderUrlBadge("youtube", lead.youtube)}
-                  </div>
-                </div>
-
-                {/* Card Action Buttons */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-1.5">
-                  {/* View Images Button */}
-                  {(() => {
-                    const imgCount =
-                      (quickViewLead?.id === lead.id
-                        ? quickViewLead
-                        : lead
-                      ).documents?.filter(
-                        (d) =>
-                          d.url &&
-                          (/\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(
-                            d.url,
-                          ) ||
-                            /\.(jpg|jpeg|png|webp|gif|svg)/i.test(
-                              d.fileName || "",
-                            )),
-                      ).length || 0;
-                    return (
-                      <button
-                        onClick={() => handleOpenImageModal(lead)}
-                        className={`px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1 text-xs font-bold ${
-                          imgCount > 0
-                            ? "bg-purple-50 hover:bg-purple-600 hover:text-white text-purple-600 border-purple-200/70"
-                            : "bg-slate-50 text-slate-500 hover:bg-slate-100 border-slate-200"
-                        }`}
-                        title={
-                          imgCount > 0
-                            ? `View ${imgCount} Attached Image(s)`
-                            : "Upload / Attach Images"
-                        }
-                      >
-                        <ImageIcon className="w-3.5 h-3.5" />
-                        {imgCount > 0 && (
-                          <span className="bg-purple-200 text-purple-800 text-[10px] font-extrabold px-1.5 py-0.2 rounded-md ml-0.5">
-                            {imgCount}
+                    {/* Financial Summary Pill Bar inside Lead Card */}
+                    {(lead.paidAmount !== undefined ||
+                      lead.balanceAmount !== undefined ||
+                      lead.totalAmount !== undefined) && (
+                      <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs font-mono">
+                        <div className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50/80 px-2 py-1 rounded-lg border border-emerald-200/60">
+                          <span className="text-[10px] font-sans font-bold text-emerald-600 uppercase">
+                            Paid:
                           </span>
-                        )}
-                      </button>
-                    );
-                  })()}
+                          <span className="font-bold">
+                            ₹
+                            {(Number(lead.paidAmount) || 0).toLocaleString(
+                              "en-IN",
+                            )}
+                          </span>
+                        </div>
+                        <div
+                          className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border ${
+                            (Number(lead.balanceAmount) || 0) > 0
+                              ? "text-blue-700 bg-blue-50/80 border-blue-200/60"
+                              : "text-slate-600 bg-slate-100 border-slate-200"
+                          }`}
+                        >
+                          <span className="text-[10px] font-sans font-bold uppercase">
+                            Balance:
+                          </span>
+                          <span className="font-bold">
+                            ₹
+                            {(Number(lead.balanceAmount) || 0).toLocaleString(
+                              "en-IN",
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    )}
 
-                  <button
-                    onClick={() => setQuickViewLead(lead)}
-                    className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl border border-slate-200 transition-all cursor-pointer"
-                    title="View Details"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleOpenScheduleFollowUp(lead)}
-                    className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl border border-blue-200/70 transition-all cursor-pointer"
-                    title="Schedule Follow-Up Task"
-                  >
-                    <Calendar className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleOpenForwardModal(lead)}
-                    className="p-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl border border-indigo-200/70 transition-all cursor-pointer"
-                    title="Forward Lead to another employee"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleOpenEditLead(lead)}
-                    className="p-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl border border-sky-200/70 transition-all cursor-pointer"
-                    title="Edit Profile"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteLead(lead.id, lead.name)}
-                    className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl border border-rose-200/70 transition-all cursor-pointer"
-                    title="Delete Lead"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                    {/* Contact Info Pills */}
+                    <div className="flex flex-col gap-2 pt-2 border-t border-slate-100 text-xs">
+                      {lead.phone && (
+                        <a
+                          href={`tel:${lead.phone}`}
+                          className="flex items-center gap-2 text-slate-600 font-bold"
+                        >
+                          <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span>{lead.phone}</span>
+                        </a>
+                      )}
+                      {lead.email && (
+                        <div className="flex items-center gap-2 text-slate-600 font-medium truncate">
+                          <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span className="truncate">{lead.email}</span>
+                        </div>
+                      )}
+                      {lead.areaZone && (
+                        <div className="flex items-center gap-2 text-slate-500 font-medium">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span>Zone: {lead.areaZone}</span>
+                        </div>
+                      )}
+                      {lead.campaign && (
+                        <div className="flex items-center gap-2 text-slate-500 font-medium">
+                          <Tag className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span>Campaign: {lead.campaign}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Social Links Row */}
+                    <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                      {lead.googleMap &&
+                        renderUrlBadge("googleMap", lead.googleMap)}
+                      {lead.website && renderUrlBadge("website", lead.website)}
+                      {lead.instagram &&
+                        renderUrlBadge("instagram", lead.instagram)}
+                      {lead.facebook &&
+                        renderUrlBadge("facebook", lead.facebook)}
+                      {lead.twitterX &&
+                        renderUrlBadge("twitterX", lead.twitterX)}
+                      {lead.youtube && renderUrlBadge("youtube", lead.youtube)}
+                    </div>
+                  </div>
+
+                  {/* Card Action Buttons */}
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-1.5">
+                    {/* View Images Button */}
+                    {(() => {
+                      const imgCount =
+                        (quickViewLead?.id === lead.id
+                          ? quickViewLead
+                          : lead
+                        ).documents?.filter(
+                          (d) =>
+                            d.url &&
+                            (/\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(
+                              d.url,
+                            ) ||
+                              /\.(jpg|jpeg|png|webp|gif|svg)/i.test(
+                                d.fileName || "",
+                              )),
+                        ).length || 0;
+                      return (
+                        <button
+                          onClick={() => handleOpenImageModal(lead)}
+                          className={`px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1 text-xs font-bold ${
+                            imgCount > 0
+                              ? "bg-purple-50 hover:bg-purple-600 hover:text-white text-purple-600 border-purple-200/70"
+                              : "bg-slate-50 text-slate-500 hover:bg-slate-100 border-slate-200"
+                          }`}
+                          title={
+                            imgCount > 0
+                              ? `View ${imgCount} Attached Image(s)`
+                              : "Upload / Attach Images"
+                          }
+                        >
+                          <ImageIcon className="w-3.5 h-3.5" />
+                          {imgCount > 0 && (
+                            <span className="bg-purple-200 text-purple-800 text-[10px] font-extrabold px-1.5 py-0.2 rounded-md ml-0.5">
+                              {imgCount}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })()}
+
+                    <button
+                      onClick={() => setQuickViewLead(lead)}
+                      className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl border border-slate-200 transition-all cursor-pointer"
+                      title="View Details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleOpenScheduleFollowUp(lead)}
+                      className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl border border-blue-200/70 transition-all cursor-pointer"
+                      title="Schedule Follow-Up Task"
+                    >
+                      <Calendar className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleOpenForwardModal(lead)}
+                      className="p-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl border border-indigo-200/70 transition-all cursor-pointer"
+                      title="Forward Lead to another employee"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleOpenEditLead(lead)}
+                      className="p-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl border border-sky-200/70 transition-all cursor-pointer"
+                      title="Edit Profile"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteLead(lead.id, lead.name)}
+                      className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl border border-rose-200/70 transition-all cursor-pointer"
+                      title="Delete Lead"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })
+              );
+            })
           ) : (
             <div className="col-span-full py-12 text-center bg-white border border-slate-200/80 rounded-2xl flex flex-col items-center justify-center gap-2">
               <Search className="w-8 h-8 text-slate-300 stroke-1" />
@@ -3925,7 +3929,8 @@ export default function LeadsManager({
                         {users
                           .filter(
                             (u) =>
-                              (u.name || u.email) !== (user?.name || user?.email),
+                              (u.name || u.email) !==
+                              (user?.name || user?.email),
                           )
                           .map((u) => (
                             <option

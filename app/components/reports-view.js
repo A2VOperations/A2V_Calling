@@ -30,7 +30,9 @@ export default function ReportsView({ user: currentUser }) {
       : null);
   const isAdmin = loggedInUser?.role === "admin";
   const isDesigner = loggedInUser?.role === "designer";
-  const [reportMode, setReportMode] = useState(() => (isDesigner ? "design" : "sales"));
+  const [reportMode, setReportMode] = useState(() =>
+    isDesigner ? "design" : "sales",
+  );
   const [designProjects, setDesignProjects] = useState([]);
 
   const [users, setUsers] = useState([]);
@@ -68,7 +70,8 @@ export default function ReportsView({ user: currentUser }) {
     setLoading(true);
     setError("");
     try {
-      const userId = loggedInUser?.id || loggedInUser?._id || loggedInUser?.email || "";
+      const userId =
+        loggedInUser?.id || loggedInUser?._id || loggedInUser?.email || "";
       const [usersRes, leadsRes, followUpsRes, designRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/users`, {
           headers: { "x-user-id": userId },
@@ -84,7 +87,10 @@ export default function ReportsView({ user: currentUser }) {
           .then((res) => res.json())
           .catch(() => ({ success: false })),
         fetch(`${API_BASE_URL}/api/design-projects`, {
-          headers: { "x-user-id": userId, "x-user-role": loggedInUser?.role || "" },
+          headers: {
+            "x-user-id": userId,
+            "x-user-role": loggedInUser?.role || "",
+          },
         })
           .then((res) => res.json())
           .catch(() => ({ success: false })),
@@ -520,14 +526,18 @@ export default function ReportsView({ user: currentUser }) {
     if (selectedUser !== "all") {
       filtered = designProjects.filter(
         (p) =>
-          (p.assignedToName && p.assignedToName.toLowerCase() === selectedUser.toLowerCase()) ||
-          (p.assignedToEmail && p.assignedToEmail.toLowerCase() === selectedUser.toLowerCase())
+          (p.assignedToName &&
+            p.assignedToName.toLowerCase() === selectedUser.toLowerCase()) ||
+          (p.assignedToEmail &&
+            p.assignedToEmail.toLowerCase() === selectedUser.toLowerCase()),
       );
     }
 
     const total = filtered.length;
     const completed = filtered.filter((p) => p.status === "Completed").length;
-    const inProgress = filtered.filter((p) => p.status === "In Progress").length;
+    const inProgress = filtered.filter(
+      (p) => p.status === "In Progress",
+    ).length;
     const inReview = filtered.filter((p) => p.status === "In Review").length;
 
     let totalSteps = 0;
@@ -592,7 +602,9 @@ export default function ReportsView({ user: currentUser }) {
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-                {reportMode === "design" ? "Graphic Design Work Analytics" : "User Activeness & Daily Reports"}
+                {reportMode === "design"
+                  ? "Graphic Design Work Analytics"
+                  : "User Activeness & Daily Reports"}
               </h1>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
                 {reportMode === "design"
@@ -697,57 +709,95 @@ export default function ReportsView({ user: currentUser }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Design Projects</span>
-                <div className="p-2 bg-sky-50 text-sky-600 rounded-xl text-base font-bold">🎨</div>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Design Projects
+                </span>
+                <div className="p-2 bg-sky-50 text-sky-600 rounded-xl text-base font-bold">
+                  🎨
+                </div>
               </div>
               <div className="mt-3">
-                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">{designStats.total}</span>
-                <span className="text-xs font-medium text-slate-400 ml-2">projects total</span>
+                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                  {designStats.total}
+                </span>
+                <span className="text-xs font-medium text-slate-400 ml-2">
+                  projects total
+                </span>
               </div>
               <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold text-slate-500">
                 <span>Completed: {designStats.completed}</span>
-                <span className="text-sky-600 font-bold">Active: {designStats.inProgress}</span>
+                <span className="text-sky-600 font-bold">
+                  Active: {designStats.inProgress}
+                </span>
               </div>
             </div>
 
             <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Steps Approved</span>
-                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl text-base font-bold">✅</div>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Steps Approved
+                </span>
+                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl text-base font-bold">
+                  ✅
+                </div>
               </div>
               <div className="mt-3">
-                <span className="text-3xl font-extrabold text-emerald-600 tracking-tight">{designStats.approvedSteps}</span>
-                <span className="text-xs font-medium text-slate-400 ml-2">/ {designStats.totalSteps} total steps</span>
+                <span className="text-3xl font-extrabold text-emerald-600 tracking-tight">
+                  {designStats.approvedSteps}
+                </span>
+                <span className="text-xs font-medium text-slate-400 ml-2">
+                  / {designStats.totalSteps} total steps
+                </span>
               </div>
               <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold text-slate-500">
                 <span>Pending Review</span>
-                <span className="text-amber-600 font-bold">{designStats.submittedSteps} steps</span>
+                <span className="text-amber-600 font-bold">
+                  {designStats.submittedSteps} steps
+                </span>
               </div>
             </div>
 
             <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Work Submissions</span>
-                <div className="p-2 bg-purple-50 text-purple-600 rounded-xl text-base font-bold">📦</div>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Work Submissions
+                </span>
+                <div className="p-2 bg-purple-50 text-purple-600 rounded-xl text-base font-bold">
+                  📦
+                </div>
               </div>
               <div className="mt-3">
-                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">{designStats.totalSubmissions}</span>
-                <span className="text-xs font-medium text-slate-400 ml-2">deliveries</span>
+                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                  {designStats.totalSubmissions}
+                </span>
+                <span className="text-xs font-medium text-slate-400 ml-2">
+                  deliveries
+                </span>
               </div>
               <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold text-slate-500">
                 <span>Revisions Requested</span>
-                <span className="text-rose-600 font-bold">{designStats.revisionSteps}</span>
+                <span className="text-rose-600 font-bold">
+                  {designStats.revisionSteps}
+                </span>
               </div>
             </div>
 
             <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-xs flex flex-col justify-between">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Approval Rate</span>
-                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl text-base font-bold">🎯</div>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Approval Rate
+                </span>
+                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl text-base font-bold">
+                  🎯
+                </div>
               </div>
               <div className="mt-3">
-                <span className="text-3xl font-extrabold text-indigo-600 tracking-tight">{designStats.approvalRate}%</span>
-                <span className="text-xs font-medium text-slate-400 ml-2">first time approval</span>
+                <span className="text-3xl font-extrabold text-indigo-600 tracking-tight">
+                  {designStats.approvalRate}%
+                </span>
+                <span className="text-xs font-medium text-slate-400 ml-2">
+                  first time approval
+                </span>
               </div>
               <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-semibold text-slate-500">
                 <span>Quality Score</span>
@@ -789,22 +839,44 @@ export default function ReportsView({ user: currentUser }) {
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
                     {designStats.filtered.map((proj) => {
-                      const approvedCount = proj.steps?.filter((s) => s.status === "Approved").length || 0;
+                      const approvedCount =
+                        proj.steps?.filter((s) => s.status === "Approved")
+                          .length || 0;
                       const totalSteps = proj.steps?.length || 1;
-                      const pct = Math.round((approvedCount / totalSteps) * 100);
-                      const subCount = proj.steps?.reduce((sum, s) => sum + (s.submissions?.length || 0), 0) || 0;
+                      const pct = Math.round(
+                        (approvedCount / totalSteps) * 100,
+                      );
+                      const subCount =
+                        proj.steps?.reduce(
+                          (sum, s) => sum + (s.submissions?.length || 0),
+                          0,
+                        ) || 0;
 
                       return (
-                        <tr key={proj._id} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="p-3 font-bold text-slate-900">{proj.title}</td>
-                          <td className="p-3 text-slate-500">{proj.clientName || "N/A"}</td>
-                          <td className="p-3">{proj.assignedToName || "Designer"}</td>
+                        <tr
+                          key={proj._id}
+                          className="hover:bg-slate-50/80 transition-colors"
+                        >
+                          <td className="p-3 font-bold text-slate-900">
+                            {proj.title}
+                          </td>
+                          <td className="p-3 text-slate-500">
+                            {proj.clientName || "N/A"}
+                          </td>
+                          <td className="p-3">
+                            {proj.assignedToName || "Designer"}
+                          </td>
                           <td className="p-3 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-linear-to-r from-sky-500 to-emerald-500" style={{ width: `${pct}%` }} />
+                                <div
+                                  className="h-full bg-linear-to-r from-sky-500 to-emerald-500"
+                                  style={{ width: `${pct}%` }}
+                                />
                               </div>
-                              <span className="text-[11px] font-bold text-slate-600">{approvedCount}/{totalSteps}</span>
+                              <span className="text-[11px] font-bold text-slate-600">
+                                {approvedCount}/{totalSteps}
+                              </span>
                             </div>
                           </td>
                           <td className="p-3 text-center">
@@ -813,14 +885,26 @@ export default function ReportsView({ user: currentUser }) {
                             </span>
                           </td>
                           <td className="p-3 text-center">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              proj.priority === "Urgent" ? "bg-rose-100 text-rose-700" : "bg-slate-100 text-slate-600"
-                            }`}>{proj.priority}</span>
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                proj.priority === "Urgent"
+                                  ? "bg-rose-100 text-rose-700"
+                                  : "bg-slate-100 text-slate-600"
+                              }`}
+                            >
+                              {proj.priority}
+                            </span>
                           </td>
                           <td className="p-3 text-center">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                              proj.status === "Completed" ? "bg-emerald-100 text-emerald-700" : "bg-sky-100 text-sky-700"
-                            }`}>{proj.status}</span>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                                proj.status === "Completed"
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : "bg-sky-100 text-sky-700"
+                              }`}
+                            >
+                              {proj.status}
+                            </span>
                           </td>
                         </tr>
                       );
@@ -834,663 +918,668 @@ export default function ReportsView({ user: currentUser }) {
       ) : (
         /* SALES & LEADS REPORTS MODE */
         <>
-
-      {/* KPI Summary Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Leads Added */}
-        <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:border-sky-300/80 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Leads Added
-            </span>
-            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
-              <Plus className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-              {stats.leadsCount}
-            </span>
-            <span className="text-xs font-medium text-slate-400 ml-2">
-              this month
-            </span>
-          </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-semibold">
-            <span>
-              Selected User:{" "}
-              {selectedUser === "all" ? "All Team" : selectedUser}
-            </span>
-            <span className="text-emerald-600 font-bold">Monthly</span>
-          </div>
-        </div>
-
-        {/* Card 2: Follow-ups Completed */}
-        <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:border-purple-300/80 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Follow-ups Done
-            </span>
-            <div className="p-2 bg-purple-50 text-purple-600 rounded-xl">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-              {stats.completedFollowUps}
-            </span>
-            <span className="text-xs font-medium text-slate-400 ml-2">
-              / {stats.followUpsCount} total
-            </span>
-          </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-semibold">
-            <span>Completion Rate</span>
-            <span className="text-purple-600 font-bold">
-              {stats.followUpsCount > 0
-                ? `${Math.round((stats.completedFollowUps / stats.followUpsCount) * 100)}%`
-                : "0%"}
-            </span>
-          </div>
-        </div>
-
-        {/* Card 3: Total Day Activities */}
-        <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:border-blue-300/80 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Total Month Activity
-            </span>
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
-              <Flame className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-              {stats.totalActivities}
-            </span>
-            <span className="text-xs font-medium text-slate-400 ml-2">
-              actions
-            </span>
-          </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-semibold">
-            <span>Leads + Follow-ups</span>
-            <span className="text-blue-600 font-bold">
-              {stats.activeDays} Active Days
-            </span>
-          </div>
-        </div>
-
-        {/* Card 4: Daily Average Rate */}
-        <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:border-sky-300/80 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Daily Avg Rate
-            </span>
-            <div className="p-2 bg-sky-50 text-sky-600 rounded-xl">
-              <TrendingUp className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-              {stats.avgDailyActivities}
-            </span>
-            <span className="text-xs font-medium text-slate-400 ml-2">
-              actions / active day
-            </span>
-          </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-semibold">
-            <span>Consistency Index</span>
-            <span className="text-sky-600 font-bold">
-              {stats.activeDays >= 15
-                ? "High"
-                : stats.activeDays >= 5
-                  ? "Moderate"
-                  : "Low"}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Navigation Tabs */}
-      <div className="flex items-center border-b border-slate-200 gap-6">
-        <button
-          onClick={() => setActiveTab("leadHandlingReport")}
-          className={`pb-3 text-xs font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
-            activeTab === "leadHandlingReport"
-              ? "text-sky-600 border-b-2 border-sky-600"
-              : "text-slate-500 hover:text-slate-800"
-          }`}
-        >
-          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-          <span>Lead Handling & Assignment Report</span>
-          <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">
-            {leads.filter((l) => l.handledBy).length} Handled
-          </span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("dayReport")}
-          className={`pb-3 text-xs font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
-            activeTab === "dayReport"
-              ? "text-sky-600 border-b-2 border-sky-600"
-              : "text-slate-500 hover:text-slate-800"
-          }`}
-        >
-          <Calendar className="w-4 h-4" />
-          <span>Activities in a Day Report ({selectedMonth})</span>
-        </button>
-
-        {isAdmin && (
-          <button
-            onClick={() => setActiveTab("userLeaderboard")}
-            className={`pb-3 text-xs font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
-              activeTab === "userLeaderboard"
-                ? "text-sky-600 border-b-2 border-sky-600"
-                : "text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            <span>
-              User Activeness Leaderboard ({userActivenessList.length})
-            </span>
-            <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded">
-              Admin Only
-            </span>
-          </button>
-        )}
-      </div>
-
-      {/* TAB 0: LEAD HANDLING & ASSIGNMENT REPORT */}
-      {activeTab === "leadHandlingReport" && (
-        <div className="flex flex-col gap-6">
-          {/* User Lead Handling Breakdown Table */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
-            <div className="p-5 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">
-                  User Lead Handling Performance Table
-                </h3>
-                <p className="text-xs text-slate-400 font-medium mt-0.5">
-                  Detailed breakdown of leads accepted, active pipelines, and
-                  revenue per team member
-                </p>
-              </div>
-              <div className="relative min-w-55">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Search user..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-8 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 outline-none focus:border-sky-500"
-                />
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-200/80 uppercase tracking-wider text-[10px]">
-                    <th className="py-3.5 px-5">Team Member</th>
-                    <th className="py-3.5 px-4">
-                      Leads Accepted ({selectedMonth})
-                    </th>
-                    <th className="py-3.5 px-4">Total Handled (All-Time)</th>
-                    <th className="py-3.5 px-4">Active Handled Leads</th>
-                    <th className="py-3.5 px-4">Handled Paid Revenue</th>
-                    <th className="py-3.5 px-4">Handling Share %</th>
-                    <th className="py-3.5 px-5 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
-                  {leadHandlingList.length > 0 ? (
-                    leadHandlingList.map((item, idx) => (
-                      <tr
-                        key={item.email || idx}
-                        className="hover:bg-slate-50/60 transition-colors"
-                      >
-                        <td className="py-4 px-5">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                              {item.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                                <span>{item.name}</span>
-                                {idx === 0 && item.totalHandledCount > 0 && (
-                                  <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-md flex items-center gap-0.5">
-                                    <Award className="w-3 h-3 text-blue-600" />{" "}
-                                    Top Handler
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-[11px] text-slate-400 font-normal">
-                                {item.email}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="font-extrabold text-blue-700 text-sm">
-                            {item.monthHandledCount}
-                          </span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="font-extrabold text-slate-900 text-sm">
-                            {item.totalHandledCount}
-                          </span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="px-2.5 py-1 bg-sky-50 text-sky-700 border border-sky-200/70 rounded-full text-xs font-bold">
-                            {item.activeHandledCount} Active
-                          </span>
-                        </td>
-                        <td className="py-4 px-4 font-mono font-bold text-emerald-700 text-xs">
-                          ₹{item.handledPaidSum.toLocaleString("en-IN")}
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 bg-slate-100 h-2 rounded-full overflow-hidden">
-                              <div
-                                className="bg-emerald-500 h-full rounded-full"
-                                style={{
-                                  width: `${Math.max(5, item.handlingSharePct)}%`,
-                                }}
-                              />
-                            </div>
-                            <span className="text-[11px] font-bold text-slate-600">
-                              {item.handlingSharePct}%
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-5 text-right">
-                          <button
-                            onClick={() => setSelectedUserHandledDetail(item)}
-                            className="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 border border-emerald-200/60 shadow-2xs"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            <span>
-                              View Handled Leads ({item.handledLeadsList.length}
-                              )
-                            </span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={7}
-                        className="py-8 text-center text-slate-400 font-medium"
-                      >
-                        No lead handling records found for team members.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 1: ACTIVITIES IN A DAY REPORT OF MONTH */}
-      {activeTab === "dayReport" && (
-        <div className="flex flex-col gap-6">
-          {/* Daily Calendar Matrix */}
-          <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-xs">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-              <div>
-                <h2 className="text-sm font-bold text-slate-900">
-                  Daily Activity Calendar View
-                </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Click on any day cell to view exact leads added and follow-ups
-                  completed on that day
-                </p>
-              </div>
-
-              {/* Intensity Legend */}
-              <div className="flex items-center gap-3 text-xs font-medium text-slate-600">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Activity Level:
+          {/* KPI Summary Overview Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Card 1: Leads Added */}
+            <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:border-sky-300/80 transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Leads Added
                 </span>
-                <div className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-md bg-slate-100 border border-slate-200"></span>
-                  <span>None</span>
+                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                  <Plus className="w-4 h-4" />
                 </div>
-                <div className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-md bg-sky-100 border border-sky-300"></span>
-                  <span>Low (1)</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-md bg-sky-400 text-white"></span>
-                  <span>Medium (2-4)</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-md bg-emerald-500 text-white"></span>
-                  <span>High (5+)</span>
-                </div>
+              </div>
+              <div className="mt-3">
+                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                  {stats.leadsCount}
+                </span>
+                <span className="text-xs font-medium text-slate-400 ml-2">
+                  this month
+                </span>
+              </div>
+              <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-semibold">
+                <span>
+                  Selected User:{" "}
+                  {selectedUser === "all" ? "All Team" : selectedUser}
+                </span>
+                <span className="text-emerald-600 font-bold">Monthly</span>
               </div>
             </div>
 
-            {/* Calendar Grid (Days of Month) */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
-              {monthlyDays.map((d) => {
-                let bgStyle =
-                  "bg-slate-50/70 border-slate-200/70 hover:border-slate-300";
-                let textBadgeStyle = "text-slate-600";
+            {/* Card 2: Follow-ups Completed */}
+            <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:border-purple-300/80 transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Follow-ups Done
+                </span>
+                <div className="p-2 bg-purple-50 text-purple-600 rounded-xl">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-3">
+                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                  {stats.completedFollowUps}
+                </span>
+                <span className="text-xs font-medium text-slate-400 ml-2">
+                  / {stats.followUpsCount} total
+                </span>
+              </div>
+              <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-semibold">
+                <span>Completion Rate</span>
+                <span className="text-purple-600 font-bold">
+                  {stats.followUpsCount > 0
+                    ? `${Math.round((stats.completedFollowUps / stats.followUpsCount) * 100)}%`
+                    : "0%"}
+                </span>
+              </div>
+            </div>
 
-                if (d.intensity === "high") {
-                  bgStyle =
-                    "bg-emerald-50/80 border-emerald-300 hover:border-emerald-500 shadow-2xs";
-                  textBadgeStyle = "text-emerald-700 font-bold";
-                } else if (d.intensity === "medium") {
-                  bgStyle =
-                    "bg-sky-50/80 border-sky-300 hover:border-sky-500 shadow-2xs";
-                  textBadgeStyle = "text-sky-700 font-bold";
-                } else if (d.intensity === "low") {
-                  bgStyle =
-                    "bg-indigo-50/60 border-indigo-200 hover:border-indigo-400";
-                  textBadgeStyle = "text-indigo-700 font-bold";
-                }
+            {/* Card 3: Total Day Activities */}
+            <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:border-blue-300/80 transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Total Month Activity
+                </span>
+                <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                  <Flame className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-3">
+                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                  {stats.totalActivities}
+                </span>
+                <span className="text-xs font-medium text-slate-400 ml-2">
+                  actions
+                </span>
+              </div>
+              <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-semibold">
+                <span>Leads + Follow-ups</span>
+                <span className="text-blue-600 font-bold">
+                  {stats.activeDays} Active Days
+                </span>
+              </div>
+            </div>
 
-                return (
-                  <button
-                    key={d.dateStr}
-                    onClick={() => setSelectedDayDetail(d.dateStr)}
-                    className={`p-3.5 rounded-xl border text-left transition-all flex flex-col justify-between min-h-24 cursor-pointer group ${bgStyle}`}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span className="text-xs font-extrabold text-slate-800 group-hover:text-sky-600 transition-colors">
-                        Day {d.dayNumber}
-                      </span>
-                      <span
-                        className={`text-[10px] font-bold uppercase tracking-wider ${d.isWeekend ? "text-rose-400" : "text-slate-400"}`}
-                      >
-                        {d.dayOfWeek}
-                      </span>
+            {/* Card 4: Daily Average Rate */}
+            <div className="bg-white border border-slate-200/80 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:border-sky-300/80 transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Daily Avg Rate
+                </span>
+                <div className="p-2 bg-sky-50 text-sky-600 rounded-xl">
+                  <TrendingUp className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="mt-3">
+                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                  {stats.avgDailyActivities}
+                </span>
+                <span className="text-xs font-medium text-slate-400 ml-2">
+                  actions / active day
+                </span>
+              </div>
+              <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-semibold">
+                <span>Consistency Index</span>
+                <span className="text-sky-600 font-bold">
+                  {stats.activeDays >= 15
+                    ? "High"
+                    : stats.activeDays >= 5
+                      ? "Moderate"
+                      : "Low"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Navigation Tabs */}
+          <div className="flex items-center border-b border-slate-200 gap-6">
+            <button
+              onClick={() => setActiveTab("leadHandlingReport")}
+              className={`pb-3 text-xs font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
+                activeTab === "leadHandlingReport"
+                  ? "text-sky-600 border-b-2 border-sky-600"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              <span>Lead Handling & Assignment Report</span>
+              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">
+                {leads.filter((l) => l.handledBy).length} Handled
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("dayReport")}
+              className={`pb-3 text-xs font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
+                activeTab === "dayReport"
+                  ? "text-sky-600 border-b-2 border-sky-600"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <Calendar className="w-4 h-4" />
+              <span>Activities in a Day Report ({selectedMonth})</span>
+            </button>
+
+            {isAdmin && (
+              <button
+                onClick={() => setActiveTab("userLeaderboard")}
+                className={`pb-3 text-xs font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
+                  activeTab === "userLeaderboard"
+                    ? "text-sky-600 border-b-2 border-sky-600"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                <span>
+                  User Activeness Leaderboard ({userActivenessList.length})
+                </span>
+                <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded">
+                  Admin Only
+                </span>
+              </button>
+            )}
+          </div>
+
+          {/* TAB 0: LEAD HANDLING & ASSIGNMENT REPORT */}
+          {activeTab === "leadHandlingReport" && (
+            <div className="flex flex-col gap-6">
+              {/* User Lead Handling Breakdown Table */}
+              <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
+                <div className="p-5 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      User Lead Handling Performance Table
+                    </h3>
+                    <p className="text-xs text-slate-400 font-medium mt-0.5">
+                      Detailed breakdown of leads accepted, active pipelines,
+                      and revenue per team member
+                    </p>
+                  </div>
+                  <div className="relative min-w-55">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="Search user..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full h-8 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 outline-none focus:border-sky-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-200/80 uppercase tracking-wider text-[10px]">
+                        <th className="py-3.5 px-5">Team Member</th>
+                        <th className="py-3.5 px-4">
+                          Leads Accepted ({selectedMonth})
+                        </th>
+                        <th className="py-3.5 px-4">
+                          Total Handled (All-Time)
+                        </th>
+                        <th className="py-3.5 px-4">Active Handled Leads</th>
+                        <th className="py-3.5 px-4">Handled Paid Revenue</th>
+                        <th className="py-3.5 px-4">Handling Share %</th>
+                        <th className="py-3.5 px-5 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                      {leadHandlingList.length > 0 ? (
+                        leadHandlingList.map((item, idx) => (
+                          <tr
+                            key={item.email || idx}
+                            className="hover:bg-slate-50/60 transition-colors"
+                          >
+                            <td className="py-4 px-5">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                                  {item.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                  <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                                    <span>{item.name}</span>
+                                    {idx === 0 &&
+                                      item.totalHandledCount > 0 && (
+                                        <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-md flex items-center gap-0.5">
+                                          <Award className="w-3 h-3 text-blue-600" />{" "}
+                                          Top Handler
+                                        </span>
+                                      )}
+                                  </div>
+                                  <div className="text-[11px] text-slate-400 font-normal">
+                                    {item.email}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className="font-extrabold text-blue-700 text-sm">
+                                {item.monthHandledCount}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className="font-extrabold text-slate-900 text-sm">
+                                {item.totalHandledCount}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className="px-2.5 py-1 bg-sky-50 text-sky-700 border border-sky-200/70 rounded-full text-xs font-bold">
+                                {item.activeHandledCount} Active
+                              </span>
+                            </td>
+                            <td className="py-4 px-4 font-mono font-bold text-emerald-700 text-xs">
+                              ₹{item.handledPaidSum.toLocaleString("en-IN")}
+                            </td>
+                            <td className="py-4 px-4">
+                              <div className="flex items-center gap-2">
+                                <div className="w-16 bg-slate-100 h-2 rounded-full overflow-hidden">
+                                  <div
+                                    className="bg-emerald-500 h-full rounded-full"
+                                    style={{
+                                      width: `${Math.max(5, item.handlingSharePct)}%`,
+                                    }}
+                                  />
+                                </div>
+                                <span className="text-[11px] font-bold text-slate-600">
+                                  {item.handlingSharePct}%
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-5 text-right">
+                              <button
+                                onClick={() =>
+                                  setSelectedUserHandledDetail(item)
+                                }
+                                className="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 border border-emerald-200/60 shadow-2xs"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>
+                                  View Handled Leads (
+                                  {item.handledLeadsList.length})
+                                </span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td
+                            colSpan={7}
+                            className="py-8 text-center text-slate-400 font-medium"
+                          >
+                            No lead handling records found for team members.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 1: ACTIVITIES IN A DAY REPORT OF MONTH */}
+          {activeTab === "dayReport" && (
+            <div className="flex flex-col gap-6">
+              {/* Daily Calendar Matrix */}
+              <div className="bg-white border border-slate-200/80 p-6 rounded-2xl shadow-xs">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-900">
+                      Daily Activity Calendar View
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Click on any day cell to view exact leads added and
+                      follow-ups completed on that day
+                    </p>
+                  </div>
+
+                  {/* Intensity Legend */}
+                  <div className="flex items-center gap-3 text-xs font-medium text-slate-600">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      Activity Level:
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="w-3 h-3 rounded-md bg-slate-100 border border-slate-200"></span>
+                      <span>None</span>
                     </div>
+                    <div className="flex items-center gap-1">
+                      <span className="w-3 h-3 rounded-md bg-sky-100 border border-sky-300"></span>
+                      <span>Low (1)</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="w-3 h-3 rounded-md bg-sky-400 text-white"></span>
+                      <span>Medium (2-4)</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="w-3 h-3 rounded-md bg-emerald-500 text-white"></span>
+                      <span>High (5+)</span>
+                    </div>
+                  </div>
+                </div>
 
-                    <div className="mt-2 flex flex-col gap-1">
-                      {d.totalActivities > 0 ? (
-                        <>
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span className="text-slate-500 font-medium flex items-center gap-1">
-                              <Plus className="w-3 h-3 text-emerald-500" />{" "}
-                              Leads:
+                {/* Calendar Grid (Days of Month) */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
+                  {monthlyDays.map((d) => {
+                    let bgStyle =
+                      "bg-slate-50/70 border-slate-200/70 hover:border-slate-300";
+                    let textBadgeStyle = "text-slate-600";
+
+                    if (d.intensity === "high") {
+                      bgStyle =
+                        "bg-emerald-50/80 border-emerald-300 hover:border-emerald-500 shadow-2xs";
+                      textBadgeStyle = "text-emerald-700 font-bold";
+                    } else if (d.intensity === "medium") {
+                      bgStyle =
+                        "bg-sky-50/80 border-sky-300 hover:border-sky-500 shadow-2xs";
+                      textBadgeStyle = "text-sky-700 font-bold";
+                    } else if (d.intensity === "low") {
+                      bgStyle =
+                        "bg-indigo-50/60 border-indigo-200 hover:border-indigo-400";
+                      textBadgeStyle = "text-indigo-700 font-bold";
+                    }
+
+                    return (
+                      <button
+                        key={d.dateStr}
+                        onClick={() => setSelectedDayDetail(d.dateStr)}
+                        className={`p-3.5 rounded-xl border text-left transition-all flex flex-col justify-between min-h-24 cursor-pointer group ${bgStyle}`}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-xs font-extrabold text-slate-800 group-hover:text-sky-600 transition-colors">
+                            Day {d.dayNumber}
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-wider ${d.isWeekend ? "text-rose-400" : "text-slate-400"}`}
+                          >
+                            {d.dayOfWeek}
+                          </span>
+                        </div>
+
+                        <div className="mt-2 flex flex-col gap-1">
+                          {d.totalActivities > 0 ? (
+                            <>
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span className="text-slate-500 font-medium flex items-center gap-1">
+                                  <Plus className="w-3 h-3 text-emerald-500" />{" "}
+                                  Leads:
+                                </span>
+                                <span className="font-bold text-slate-800">
+                                  {d.leadsCount}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span className="text-slate-500 font-medium flex items-center gap-1">
+                                  <Clock className="w-3 h-3 text-purple-500" />{" "}
+                                  Follow-ups:
+                                </span>
+                                <span className="font-bold text-slate-800">
+                                  {d.followUpsCount}
+                                </span>
+                              </div>
+                            </>
+                          ) : (
+                            <span className="text-[11px] text-slate-400 font-medium italic mt-2">
+                              No activity
                             </span>
+                          )}
+                        </div>
+
+                        <div className="mt-2 pt-1.5 border-t border-slate-200/40 flex items-center justify-between text-[10px]">
+                          <span className={textBadgeStyle}>
+                            {d.totalActivities} total
+                          </span>
+                          <Eye className="w-3 h-3 text-slate-400 group-hover:text-sky-600 transition-colors" />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Daily Activity Summary Table */}
+              <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
+                <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      Month Daily Breakdown Table
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Detailed day-by-day logs for {selectedMonth}
+                    </p>
+                  </div>
+                  <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">
+                    {monthlyDays.length} Days
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-200/80 uppercase tracking-wider text-[10px]">
+                        <th className="py-3 px-4">Date</th>
+                        <th className="py-3 px-4">Day</th>
+                        <th className="py-3 px-4">Leads Added</th>
+                        <th className="py-3 px-4">Follow-ups Scheduled</th>
+                        <th className="py-3 px-4">Follow-ups Completed</th>
+                        <th className="py-3 px-4">Total Activities</th>
+                        <th className="py-3 px-4 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                      {monthlyDays.map((d) => (
+                        <tr
+                          key={d.dateStr}
+                          className="hover:bg-slate-50/60 transition-colors"
+                        >
+                          <td className="py-3 px-4 font-bold text-slate-900">
+                            {d.dateStr}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[11px] font-bold ${d.isWeekend ? "bg-rose-50 text-rose-600" : "bg-slate-100 text-slate-600"}`}
+                            >
+                              {d.dayOfWeek}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">
                             <span className="font-bold text-slate-800">
                               {d.leadsCount}
                             </span>
-                          </div>
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span className="text-slate-500 font-medium flex items-center gap-1">
-                              <Clock className="w-3 h-3 text-purple-500" />{" "}
-                              Follow-ups:
-                            </span>
+                          </td>
+                          <td className="py-3 px-4">
                             <span className="font-bold text-slate-800">
                               {d.followUpsCount}
                             </span>
-                          </div>
-                        </>
-                      ) : (
-                        <span className="text-[11px] text-slate-400 font-medium italic mt-2">
-                          No activity
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="mt-2 pt-1.5 border-t border-slate-200/40 flex items-center justify-between text-[10px]">
-                      <span className={textBadgeStyle}>
-                        {d.totalActivities} total
-                      </span>
-                      <Eye className="w-3 h-3 text-slate-400 group-hover:text-sky-600 transition-colors" />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Daily Activity Summary Table */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">
-                  Month Daily Breakdown Table
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Detailed day-by-day logs for {selectedMonth}
-                </p>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="font-bold text-emerald-700">
+                              {d.completedFollowUpsCount}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span
+                              className={`px-2 py-1 rounded-md text-xs font-extrabold ${
+                                d.totalActivities >= 5
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : d.totalActivities >= 1
+                                    ? "bg-sky-100 text-sky-800"
+                                    : "bg-slate-100 text-slate-500"
+                              }`}
+                            >
+                              {d.totalActivities} actions
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <button
+                              onClick={() => setSelectedDayDetail(d.dateStr)}
+                              className="px-2.5 py-1 bg-slate-100 hover:bg-sky-50 text-slate-700 hover:text-sky-600 rounded-lg text-xs font-semibold transition-all inline-flex items-center gap-1 cursor-pointer"
+                            >
+                              <Eye className="w-3 h-3" />
+                              <span>View Details</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-              <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">
-                {monthlyDays.length} Days
-              </span>
             </div>
+          )}
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-200/80 uppercase tracking-wider text-[10px]">
-                    <th className="py-3 px-4">Date</th>
-                    <th className="py-3 px-4">Day</th>
-                    <th className="py-3 px-4">Leads Added</th>
-                    <th className="py-3 px-4">Follow-ups Scheduled</th>
-                    <th className="py-3 px-4">Follow-ups Completed</th>
-                    <th className="py-3 px-4">Total Activities</th>
-                    <th className="py-3 px-4 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
-                  {monthlyDays.map((d) => (
-                    <tr
-                      key={d.dateStr}
-                      className="hover:bg-slate-50/60 transition-colors"
-                    >
-                      <td className="py-3 px-4 font-bold text-slate-900">
-                        {d.dateStr}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`px-2 py-0.5 rounded text-[11px] font-bold ${d.isWeekend ? "bg-rose-50 text-rose-600" : "bg-slate-100 text-slate-600"}`}
-                        >
-                          {d.dayOfWeek}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="font-bold text-slate-800">
-                          {d.leadsCount}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="font-bold text-slate-800">
-                          {d.followUpsCount}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="font-bold text-emerald-700">
-                          {d.completedFollowUpsCount}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`px-2 py-1 rounded-md text-xs font-extrabold ${
-                            d.totalActivities >= 5
-                              ? "bg-emerald-100 text-emerald-800"
-                              : d.totalActivities >= 1
-                                ? "bg-sky-100 text-sky-800"
-                                : "bg-slate-100 text-slate-500"
-                          }`}
-                        >
-                          {d.totalActivities} actions
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <button
-                          onClick={() => setSelectedDayDetail(d.dateStr)}
-                          className="px-2.5 py-1 bg-slate-100 hover:bg-sky-50 text-slate-700 hover:text-sky-600 rounded-lg text-xs font-semibold transition-all inline-flex items-center gap-1 cursor-pointer"
-                        >
-                          <Eye className="w-3 h-3" />
-                          <span>View Details</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
+          {/* TAB 2: USER ACTIVENESS LEADERBOARD (ADMIN ONLY) */}
+          {activeTab === "userLeaderboard" && isAdmin && (
+            <div className="flex flex-col gap-6">
+              {/* Filter Bar */}
+              <div className="bg-white border border-slate-200/80 p-4 rounded-2xl shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search user name..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                  />
+                </div>
+                <span className="text-xs font-semibold text-slate-500">
+                  Showing performance for{" "}
+                  <strong className="text-slate-800">{selectedMonth}</strong>
+                </span>
+              </div>
 
-      {/* TAB 2: USER ACTIVENESS LEADERBOARD (ADMIN ONLY) */}
-      {activeTab === "userLeaderboard" && isAdmin && (
-        <div className="flex flex-col gap-6">
-          {/* Filter Bar */}
-          <div className="bg-white border border-slate-200/80 p-4 rounded-2xl shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search user name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
-              />
-            </div>
-            <span className="text-xs font-semibold text-slate-500">
-              Showing performance for{" "}
-              <strong className="text-slate-800">{selectedMonth}</strong>
-            </span>
-          </div>
-
-          {/* User Performance Table */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-200/80 uppercase tracking-wider text-[10px]">
-                    <th className="py-3.5 px-5">User</th>
-                    <th className="py-3.5 px-4">Leads Added (Month)</th>
-                    <th className="py-3.5 px-4">Follow-ups Done</th>
-                    <th className="py-3.5 px-4">Total Activities</th>
-                    <th className="py-3.5 px-4">Active Days</th>
-                    <th className="py-3.5 px-4">Activeness Tier</th>
-                    <th className="py-3.5 px-5 text-right">Filter</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
-                  {userActivenessList.length > 0 ? (
-                    userActivenessList.map((item, idx) => (
-                      <tr
-                        key={item.email || idx}
-                        className="hover:bg-slate-50/60 transition-colors"
-                      >
-                        <td className="py-4 px-5">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                              {item.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                                <span>{item.name}</span>
-                                {idx === 0 && item.monthTotalActivities > 0 && (
-                                  <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-md flex items-center gap-0.5">
-                                    <Award className="w-3 h-3 text-blue-600" />{" "}
-                                    Top
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-[11px] text-slate-400 font-normal">
-                                {item.email}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex flex-col">
-                            <span className="font-extrabold text-slate-900 text-sm">
-                              {item.monthLeadsCount}
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-normal">
-                              All-time: {item.totalLeadsCount}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex flex-col">
-                            <span className="font-extrabold text-purple-700 text-sm">
-                              {item.monthCompletedFollowUpsCount}
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-normal">
-                              Scheduled: {item.monthFollowUpsCount}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="px-2.5 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-black">
-                            {item.monthTotalActivities}
-                          </span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="font-bold text-slate-800">
-                            {item.userActiveDays} days
-                          </span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span
-                            className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${item.statusColor}`}
-                          >
-                            {item.statusTier}
-                          </span>
-                        </td>
-                        <td className="py-4 px-5 text-right">
-                          <button
-                            onClick={() => {
-                              setSelectedUser(item.name);
-                              setActiveTab("dayReport");
-                            }}
-                            className="px-3 py-1.5 bg-sky-50 text-sky-700 hover:bg-sky-100 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1"
-                          >
-                            <span>View Calendar</span>
-                            <ArrowUpRight className="w-3.5 h-3.5" />
-                          </button>
-                        </td>
+              {/* User Performance Table */}
+              <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-200/80 uppercase tracking-wider text-[10px]">
+                        <th className="py-3.5 px-5">User</th>
+                        <th className="py-3.5 px-4">Leads Added (Month)</th>
+                        <th className="py-3.5 px-4">Follow-ups Done</th>
+                        <th className="py-3.5 px-4">Total Activities</th>
+                        <th className="py-3.5 px-4">Active Days</th>
+                        <th className="py-3.5 px-4">Activeness Tier</th>
+                        <th className="py-3.5 px-5 text-right">Filter</th>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={7}
-                        className="py-8 text-center text-slate-400 font-medium"
-                      >
-                        No team member activeness records found matching your
-                        query.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
+                      {userActivenessList.length > 0 ? (
+                        userActivenessList.map((item, idx) => (
+                          <tr
+                            key={item.email || idx}
+                            className="hover:bg-slate-50/60 transition-colors"
+                          >
+                            <td className="py-4 px-5">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                                  {item.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                  <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                                    <span>{item.name}</span>
+                                    {idx === 0 &&
+                                      item.monthTotalActivities > 0 && (
+                                        <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-md flex items-center gap-0.5">
+                                          <Award className="w-3 h-3 text-blue-600" />{" "}
+                                          Top
+                                        </span>
+                                      )}
+                                  </div>
+                                  <div className="text-[11px] text-slate-400 font-normal">
+                                    {item.email}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-4 px-4">
+                              <div className="flex flex-col">
+                                <span className="font-extrabold text-slate-900 text-sm">
+                                  {item.monthLeadsCount}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-normal">
+                                  All-time: {item.totalLeadsCount}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-4">
+                              <div className="flex flex-col">
+                                <span className="font-extrabold text-purple-700 text-sm">
+                                  {item.monthCompletedFollowUpsCount}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-normal">
+                                  Scheduled: {item.monthFollowUpsCount}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className="px-2.5 py-1.5 bg-slate-900 text-white rounded-xl text-xs font-black">
+                                {item.monthTotalActivities}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className="font-bold text-slate-800">
+                                {item.userActiveDays} days
+                              </span>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span
+                                className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${item.statusColor}`}
+                              >
+                                {item.statusTier}
+                              </span>
+                            </td>
+                            <td className="py-4 px-5 text-right">
+                              <button
+                                onClick={() => {
+                                  setSelectedUser(item.name);
+                                  setActiveTab("dayReport");
+                                }}
+                                className="px-3 py-1.5 bg-sky-50 text-sky-700 hover:bg-sky-100 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1"
+                              >
+                                <span>View Calendar</span>
+                                <ArrowUpRight className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td
+                            colSpan={7}
+                            className="py-8 text-center text-slate-400 font-medium"
+                          >
+                            No team member activeness records found matching
+                            your query.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      {/* NON-ADMIN FALLBACK FOR LEADERBOARD */}
-      {activeTab === "userLeaderboard" && !isAdmin && (
-        <div className="bg-blue-50/80 border border-blue-200 p-8 rounded-2xl text-center flex flex-col items-center gap-3">
-          <AlertCircle className="w-8 h-8 text-blue-600" />
-          <h3 className="text-base font-bold text-slate-900">
-            Administrator Authorization Required
-          </h3>
-          <p className="text-xs text-slate-600 max-w-md">
-            The User Activeness Leaderboard is restricted to Administrator
-            accounts. Standard team members can track their individual
-            activities in the Daily Activity Report.
-          </p>
-        </div>
+          {/* NON-ADMIN FALLBACK FOR LEADERBOARD */}
+          {activeTab === "userLeaderboard" && !isAdmin && (
+            <div className="bg-blue-50/80 border border-blue-200 p-8 rounded-2xl text-center flex flex-col items-center gap-3">
+              <AlertCircle className="w-8 h-8 text-blue-600" />
+              <h3 className="text-base font-bold text-slate-900">
+                Administrator Authorization Required
+              </h3>
+              <p className="text-xs text-slate-600 max-w-md">
+                The User Activeness Leaderboard is restricted to Administrator
+                accounts. Standard team members can track their individual
+                activities in the Daily Activity Report.
+              </p>
+            </div>
+          )}
+        </>
       )}
-    </>
-  )}
 
       {/* FULL-SCREEN DAY DETAIL MODAL */}
       {selectedDayObj &&

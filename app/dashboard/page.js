@@ -57,11 +57,20 @@ export default function Dashboard() {
           setUsers(data.users);
           const myProfile = data.users.find(
             (u) =>
-              (activeUser?.email && u.email?.toLowerCase() === activeUser.email.toLowerCase()) ||
-              (activeUser?.id && String(u._id) === String(activeUser.id))
+              (activeUser?.email &&
+                u.email?.toLowerCase() === activeUser.email.toLowerCase()) ||
+              (activeUser?.id && String(u._id) === String(activeUser.id)),
           );
-          if (myProfile && myProfile.role && myProfile.role !== activeUser?.role) {
-            const updatedUser = { ...activeUser, role: myProfile.role, name: myProfile.name || activeUser.name };
+          if (
+            myProfile &&
+            myProfile.role &&
+            myProfile.role !== activeUser?.role
+          ) {
+            const updatedUser = {
+              ...activeUser,
+              role: myProfile.role,
+              name: myProfile.name || activeUser.name,
+            };
             setUser(updatedUser);
             localStorage.setItem("user", JSON.stringify(updatedUser));
           }
@@ -163,30 +172,39 @@ export default function Dashboard() {
   }, [user, fetchUsers, fetchLeads, fetchFollowUps]);
 
   // Presence Heartbeat & Window Closure Tracking
-  const sendPresenceStatus = useCallback((isOnlineState) => {
-    if (!user) return;
-    const userId = user.id || user._id || user.email;
-    const payload = JSON.stringify({
-      userId,
-      email: user.email,
-      isOnline: isOnlineState,
-    });
+  const sendPresenceStatus = useCallback(
+    (isOnlineState) => {
+      if (!user) return;
+      const userId = user.id || user._id || user.email;
+      const payload = JSON.stringify({
+        userId,
+        email: user.email,
+        isOnline: isOnlineState,
+      });
 
-    if (typeof navigator !== "undefined" && navigator.sendBeacon && !isOnlineState) {
-      const blob = new Blob([payload], { type: "application/json" });
-      navigator.sendBeacon(`${API_BASE_URL}/api/users/status`, blob);
-    } else {
-      fetch(`${API_BASE_URL}/api/users/status`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": userId,
-        },
-        body: payload,
-        keepalive: !isOnlineState,
-      }).catch((err) => console.warn("Presence status update notice:", err.message));
-    }
-  }, [user]);
+      if (
+        typeof navigator !== "undefined" &&
+        navigator.sendBeacon &&
+        !isOnlineState
+      ) {
+        const blob = new Blob([payload], { type: "application/json" });
+        navigator.sendBeacon(`${API_BASE_URL}/api/users/status`, blob);
+      } else {
+        fetch(`${API_BASE_URL}/api/users/status`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-user-id": userId,
+          },
+          body: payload,
+          keepalive: !isOnlineState,
+        }).catch((err) =>
+          console.warn("Presence status update notice:", err.message),
+        );
+      }
+    },
+    [user],
+  );
 
   useEffect(() => {
     if (!user) return;
@@ -225,7 +243,12 @@ export default function Dashboard() {
     }
 
     if (
-      (activeTab === "dashboard" || activeTab === "incoming-leads" || activeTab === "leads" || activeTab === "follow-ups" || activeTab === "recycle-bin" || activeTab === "users") &&
+      (activeTab === "dashboard" ||
+        activeTab === "incoming-leads" ||
+        activeTab === "leads" ||
+        activeTab === "follow-ups" ||
+        activeTab === "recycle-bin" ||
+        activeTab === "users") &&
       user &&
       user.role === "designer"
     ) {

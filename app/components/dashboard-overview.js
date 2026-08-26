@@ -37,7 +37,9 @@ export default function DashboardOverview({
     );
   };
   const isIncoming = (l) => !l.handledBy || l.status === "Incoming";
-  const visibleLeads = isAdmin ? leads : leads.filter((l) => isIncoming(l) || isUserHandled(l));
+  const visibleLeads = isAdmin
+    ? leads
+    : leads.filter((l) => isIncoming(l) || isUserHandled(l));
 
   const systemUsersCount =
     users && users.length > 0 ? users.length : user ? 1 : 1;
@@ -146,7 +148,10 @@ export default function DashboardOverview({
 
   // Leads created by or assigned to current user
   const currentUserLeads = visibleLeads.filter(
-    (l) => l.createdBy === user?.name || l.createdBy === user?.email || isUserHandled(l),
+    (l) =>
+      l.createdBy === user?.name ||
+      l.createdBy === user?.email ||
+      isUserHandled(l),
   );
 
   // Incoming unassigned leads
