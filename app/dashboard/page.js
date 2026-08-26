@@ -48,7 +48,7 @@ export default function Dashboard() {
         const response = await fetch(`${API_BASE_URL}/api/users`, {
           headers: {
             "x-user-id":
-              activeUser?.id || activeUser?._id || activeUser?.email || "",
+              activeUser?.email || activeUser?.id || activeUser?._id || "",
             "x-user-role": activeUser?.role || "",
           },
         });
@@ -70,6 +70,7 @@ export default function Dashboard() {
               ...activeUser,
               role: myProfile.role,
               name: myProfile.name || activeUser.name,
+              _id: myProfile._id,
             };
             setUser(updatedUser);
             localStorage.setItem("user", JSON.stringify(updatedUser));
@@ -87,7 +88,7 @@ export default function Dashboard() {
       try {
         const activeUser = currentUser || user;
         const userId =
-          activeUser?.id || activeUser?._id || activeUser?.email || "";
+          activeUser?.email || activeUser?.id || activeUser?._id || "";
         const response = await fetch(`${API_BASE_URL}/api/leads`, {
           headers: {
             "x-user-id": userId,
@@ -111,7 +112,7 @@ export default function Dashboard() {
       try {
         const activeUser = currentUser || user;
         const userId =
-          activeUser?.id || activeUser?._id || activeUser?.email || "";
+          activeUser?.email || activeUser?.id || activeUser?._id || "";
         const userRole = activeUser?.role || "";
         const response = await fetch(`${API_BASE_URL}/api/followups`, {
           headers: {
@@ -146,16 +147,7 @@ export default function Dashboard() {
         if (parsedUser?.role === "designer" && activeTab === "dashboard") {
           setActiveTab("design-projects");
         }
-        setUser((prev) => {
-          if (
-            prev &&
-            (prev.id || prev._id || prev.email) ===
-              (parsedUser.id || parsedUser._id || parsedUser.email)
-          ) {
-            return prev;
-          }
-          return parsedUser;
-        });
+        setUser(parsedUser);
       } catch (err) {
         console.error("Error parsing user from localStorage:", err);
         router.push("/");
@@ -261,6 +253,10 @@ export default function Dashboard() {
       sendPresenceStatus(false);
     }
     localStorage.removeItem("user");
+    setUser(null);
+    setLeads([]);
+    setUsers([]);
+    setTodos([]);
     router.push("/");
   };
 

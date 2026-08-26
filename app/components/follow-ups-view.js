@@ -55,7 +55,7 @@ export default function FollowUpsView({ user }) {
   const fetchFollowUps = async () => {
     setLoading(true);
     try {
-      const userId = user?.id || user?._id || user?.email || "";
+      const userId = user?.email || user?.id || user?._id || "";
       const userRole = user?.role || "";
       const response = await fetch(`${API_BASE_URL}/api/followups`, {
         headers: {
@@ -75,8 +75,10 @@ export default function FollowUpsView({ user }) {
     }
   };
   useEffect(() => {
-    fetchFollowUps();
-  }, []);
+    if (user) {
+      fetchFollowUps();
+    }
+  }, [user?.id, user?._id, user?.email]);
 
   // Helper to format ISO string for datetime-local input
   const toDateTimeLocalString = (dateObj) => {

@@ -44,6 +44,8 @@ export default function Home() {
 
       if (data?.user) {
         let userRole = data.user.user_metadata?.role || 'employee';
+        let userName = data.user.user_metadata?.name || data.user.email.split('@')[0];
+        let userMongoId = null;
 
         // Fetch up-to-date role profile from MongoDB
         try {
@@ -55,8 +57,10 @@ export default function Home() {
             const found = profileData.users.find(
               (u) => u.email?.toLowerCase() === data.user.email?.toLowerCase()
             );
-            if (found && found.role) {
-              userRole = found.role;
+            if (found) {
+              if (found.role) userRole = found.role;
+              if (found.name) userName = found.name;
+              if (found._id) userMongoId = found._id;
             }
           }
         } catch (pErr) {
@@ -65,7 +69,8 @@ export default function Home() {
 
         const userObj = {
           id: data.user.id,
-          name: data.user.user_metadata?.name || data.user.email.split('@')[0],
+          _id: userMongoId,
+          name: userName,
           email: data.user.email,
           role: userRole,
         };

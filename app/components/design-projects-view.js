@@ -52,7 +52,7 @@ export default function DesignProjectsView({ user, users = [] }) {
     try {
       const response = await fetch(`${API_BASE_URL}/api/design-projects`, {
         headers: {
-          "x-user-id": user?.id || user?._id || user?.email || "",
+          "x-user-id": user?.email || user?.id || user?._id || "",
           "x-user-role": user?.role || "",
         },
       });
@@ -77,7 +77,7 @@ export default function DesignProjectsView({ user, users = [] }) {
 
   useEffect(() => {
     fetchProjects();
-  }, []);
+  }, [user?.id, user?._id, user?.email, fetchProjects]);
 
   // Update custom steps when step template changes
   const handleTemplateChange = (template) => {

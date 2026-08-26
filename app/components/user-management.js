@@ -29,7 +29,7 @@ export default function UserManagement({ user: currentUser }) {
       fetchUsers(false);
     }, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [currentUser?.id, currentUser?._id, currentUser?.email]);
 
   const fetchUsers = async (showLoading = true) => {
     if (showLoading) setLoading(true);

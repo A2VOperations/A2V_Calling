@@ -71,7 +71,7 @@ export default function ReportsView({ user: currentUser }) {
     setError("");
     try {
       const userId =
-        loggedInUser?.id || loggedInUser?._id || loggedInUser?.email || "";
+        loggedInUser?.email || loggedInUser?.id || loggedInUser?._id || "";
       const [usersRes, leadsRes, followUpsRes, designRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/users`, {
           headers: { "x-user-id": userId },
@@ -133,7 +133,7 @@ export default function ReportsView({ user: currentUser }) {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [loggedInUser?.id, loggedInUser?._id, loggedInUser?.email]);
 
   // Helper: Format date into YYYY-MM-DD
   const formatYYYYMMDD = (dateInput) => {
