@@ -1664,12 +1664,12 @@ export default function LeadsManager({
   const uniqueAreaZones = getNormalizedUniqueList(
     visibleLeads.map((l) => l.areaZone),
   );
-  const uniqueCampaigns = Array.from(
-    new Set(visibleLeads.map((l) => l.campaign).filter(Boolean)),
-  ).sort();
-  const uniqueHandlers = Array.from(
-    new Set(visibleLeads.map((l) => l.handledBy).filter(Boolean)),
-  ).sort();
+  const uniqueCampaigns = getNormalizedUniqueList(
+    visibleLeads.map((l) => l.campaign),
+  );
+  const uniqueHandlers = getNormalizedUniqueList(
+    visibleLeads.map((l) => l.handledBy),
+  );
 
   const uniqueMonths = useMemo(() => {
     const monthsSet = new Set();
@@ -1760,14 +1760,19 @@ export default function LeadsManager({
       lead.areaZone?.trim().toLowerCase() ===
         filters.areaZone.trim().toLowerCase();
     const matchesCampaign =
-      filters.campaign === "All" || lead.campaign === filters.campaign;
+      filters.campaign === "All" ||
+      lead.campaign?.trim().toLowerCase() ===
+        filters.campaign.trim().toLowerCase();
     const matchesCreator =
-      filters.createdBy === "All" || lead.createdBy === filters.createdBy;
+      filters.createdBy === "All" ||
+      lead.createdBy?.trim().toLowerCase() ===
+        filters.createdBy.trim().toLowerCase();
     const matchesHandler =
       filters.handledBy === "All" ||
       (filters.handledBy === "Unassigned"
         ? !lead.handledBy
-        : lead.handledBy === filters.handledBy);
+        : lead.handledBy?.trim().toLowerCase() ===
+          filters.handledBy.trim().toLowerCase());
 
     // Payment Status matching
     let matchesPayment = true;
@@ -1820,13 +1825,13 @@ export default function LeadsManager({
   return (
     <div className="flex flex-col gap-6 animate-fade-in relative">
       {/* Top Header & Overview Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-200/80 p-5 rounded-2xl shadow-sm">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white border border-slate-200/80 p-4 sm:p-5 rounded-2xl shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-sky-600 text-white rounded-full shadow-md shadow-sky-600/20">
-            <User className="w-6 h-6" />
+          <div className="p-3 bg-sky-600 text-white rounded-full shadow-md shadow-sky-600/20 shrink-0">
+            <User className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2 flex-wrap">
               <span>Leads Management</span>
               <span className="text-xs font-extrabold bg-sky-50 text-sky-600 border border-sky-100 rounded-full px-2.5 py-0.5">
                 {filteredLeads.length}{" "}
@@ -1840,39 +1845,39 @@ export default function LeadsManager({
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap w-full sm:w-auto">
           {user?.role === "admin" && (
             <button
               onClick={handleExportCSV}
-              className="px-3.5 py-2 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-2xs"
+              className="flex-1 sm:flex-initial justify-center px-3.5 py-2 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-2xs"
               title="Export lead list to CSV file"
             >
-              <Download className="w-4 h-4 text-slate-500" />
+              <Download className="w-4 h-4 text-slate-500 shrink-0" />
               <span>Export CSV</span>
             </button>
           )}
           <button
             onClick={handleOpenAddColumn}
-            className="px-3.5 py-2 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-2xs"
+            className="flex-1 sm:flex-initial justify-center px-3.5 py-2 border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-2 shadow-2xs"
             title="Add a custom column to leads"
           >
-            <Plus className="w-4 h-4 text-slate-500" />
+            <Plus className="w-4 h-4 text-slate-500 shrink-0" />
             <span>Add Column</span>
           </button>
           <button
             onClick={handleOpenAddLead}
-            className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-600/20 transition-all cursor-pointer flex items-center gap-2"
+            className="flex-1 sm:flex-initial justify-center px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-md shadow-sky-600/20 transition-all cursor-pointer flex items-center gap-2"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 shrink-0" />
             <span>Add New Lead</span>
           </button>
         </div>
       </div>
 
       {/* Filter, Search & View Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-200/80 p-4 rounded-2xl shadow-sm">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 p-3.5 sm:p-4 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
         {/* Left Search Bar */}
-        <div className="relative flex-1 min-w-55">
+        <div className="relative flex-1 min-w-0 w-full">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 transform -translate-y-1/2" />
           <input
             type="text"
@@ -1892,9 +1897,9 @@ export default function LeadsManager({
         </div>
 
         {/* Right Controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto justify-between sm:justify-start lg:justify-end">
           {/* Month Selector Dropdown */}
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 shadow-2xs">
+          <div className="flex items-center justify-center gap-1.5 bg-slate-50 border border-slate-200/80 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 shadow-2xs shrink-0 flex-1 sm:flex-initial">
             <Calendar className="w-4 h-4 text-sky-600 shrink-0" />
             <select
               value={selectedMonth}
@@ -1913,7 +1918,7 @@ export default function LeadsManager({
           {/* Advanced Filter Toggle Button */}
           <button
             onClick={() => setIsFilterPanelOpen((prev) => !prev)}
-            className={`h-10 px-3.5 border rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 shadow-2xs ${
+            className={`h-10 px-3 sm:px-3.5 border rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 shadow-2xs shrink-0 flex-1 sm:flex-initial ${
               isFilterPanelOpen || activeFiltersCount > 0
                 ? "bg-sky-50 text-sky-700 border-sky-300 ring-2 ring-sky-500/10"
                 : "bg-slate-50 text-slate-700 border-slate-200/80 hover:bg-slate-100"
@@ -1933,10 +1938,10 @@ export default function LeadsManager({
 
           {/* Customize Columns Dropdown Toggle (Table View Only) */}
           {viewMode === "table" && (
-            <div className="relative" ref={dropdownRef}>
+            <div className="relative flex-1 sm:flex-initial" ref={dropdownRef}>
               <button
                 onClick={() => setIsColumnDropdownOpen((prev) => !prev)}
-                className="h-10 px-3.5 bg-slate-50 border border-slate-200/80 hover:bg-slate-100 rounded-xl text-xs font-bold text-slate-700 transition-all cursor-pointer flex items-center gap-2 shadow-2xs"
+                className="w-full sm:w-auto h-10 px-3 sm:px-3.5 bg-slate-50 border border-slate-200/80 hover:bg-slate-100 rounded-xl text-xs font-bold text-slate-700 transition-all cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 shadow-2xs"
               >
                 <SlidersHorizontal className="w-4 h-4 text-slate-500" />
                 <span>Columns</span>
@@ -1944,7 +1949,7 @@ export default function LeadsManager({
               </button>
 
               {isColumnDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-xl z-30 p-3 animate-fade-in max-h-80 overflow-y-auto">
+                <div className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-2rem)] bg-white border border-slate-200 rounded-xl shadow-xl z-30 p-3 animate-fade-in max-h-80 overflow-y-auto">
                   <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-2">
                     <span className="text-xs font-bold text-slate-800">
                       Customize Columns
@@ -2003,10 +2008,10 @@ export default function LeadsManager({
           )}
 
           {/* View Mode Toggle Switcher */}
-          <div className="bg-slate-100 p-1 rounded-xl flex items-center gap-1 border border-slate-200/60">
+          <div className="bg-slate-100 p-1 rounded-xl flex items-center gap-1 border border-slate-200/60 shrink-0 w-full sm:w-auto justify-center">
             <button
               onClick={() => setViewMode("table")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`flex-1 sm:flex-initial justify-center px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                 viewMode === "table"
                   ? "bg-white text-sky-600 shadow-xs"
                   : "text-slate-500 hover:text-slate-800"
@@ -2017,7 +2022,7 @@ export default function LeadsManager({
             </button>
             <button
               onClick={() => setViewMode("grid")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`flex-1 sm:flex-initial justify-center px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                 viewMode === "grid"
                   ? "bg-white text-sky-600 shadow-xs"
                   : "text-slate-500 hover:text-slate-800"
@@ -2540,7 +2545,7 @@ export default function LeadsManager({
         </div>
       ) : (
         /* Visual Card Grid View */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredLeads.length > 0 ? (
             filteredLeads.map((lead) => {
               const cardStyle = getLeadCardStyles(lead.status);
@@ -2557,7 +2562,7 @@ export default function LeadsManager({
                   <div className="flex flex-col gap-3">
                     {/* Card Top Row: Avatar & Status */}
                     <div className="flex items-start justify-between gap-3 pt-1">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
                         <div className="relative shrink-0">
                           <div className="w-10 h-10 rounded-full bg-sky-600 text-white flex items-center justify-center font-extrabold text-sm shadow-md shadow-sky-600/20">
                             {(lead.name || "L").substring(0, 2).toUpperCase()}
@@ -2567,17 +2572,17 @@ export default function LeadsManager({
                             title={`Lead Status: ${lead.status || "Incoming"}`}
                           />
                         </div>
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <h3
                             onClick={() => setQuickViewLead(lead)}
-                            className="font-bold text-slate-900 text-sm hover:text-sky-600 cursor-pointer transition-colors"
+                            className="font-bold text-slate-900 text-sm hover:text-sky-600 cursor-pointer transition-colors truncate"
                           >
                             {lead.name || "Unnamed Client"}
                           </h3>
                           {lead.businessName && (
-                            <p className="text-xs text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
-                              <Building2 className="w-3 h-3 text-slate-400" />
-                              {lead.businessName}
+                            <p className="text-xs text-slate-500 font-semibold flex items-center gap-1 mt-0.5 truncate">
+                              <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
+                              <span className="truncate">{lead.businessName}</span>
                             </p>
                           )}
                         </div>
@@ -2797,21 +2802,21 @@ export default function LeadsManager({
         isClient &&
         createPortal(
           <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-9999 flex justify-end animate-fade-in">
-            <div className="bg-white w-full max-w-md h-full shadow-2xl flex flex-col justify-between animate-slide-left border-l border-slate-200">
+            <div className="bg-white w-full max-w-full sm:max-w-md md:max-w-lg h-full shadow-2xl flex flex-col justify-between animate-slide-left border-l border-slate-200">
               {/* Premium Gradient Header */}
-              <div className="bg-linear-to-r from-slate-900 via-slate-850 to-slate-900 text-white p-6 flex items-start justify-between border-b border-slate-800 shadow-md">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-13 h-13 rounded-2xl bg-linear-to-tr from-sky-600 to-blue-500 text-white flex items-center justify-center font-black text-lg shadow-lg shadow-sky-500/25 border border-sky-400/30 shrink-0">
+              <div className="bg-linear-to-r from-slate-900 via-slate-850 to-slate-900 text-white p-4 sm:p-6 flex items-start justify-between border-b border-slate-800 shadow-md">
+                <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+                  <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl bg-linear-to-tr from-sky-600 to-blue-500 text-white flex items-center justify-center font-black text-base sm:text-lg shadow-lg shadow-sky-500/25 border border-sky-400/30 shrink-0">
                     {(quickViewLead.name || "L").substring(0, 2).toUpperCase()}
                   </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-white leading-snug tracking-tight">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-base sm:text-lg text-white leading-snug tracking-tight truncate">
                       {quickViewLead.name || "Unnamed Client"}
                     </h3>
                     {quickViewLead.businessName ? (
-                      <p className="text-xs text-sky-300/90 font-semibold flex items-center gap-1.5 mt-0.5">
+                      <p className="text-xs text-sky-300/90 font-semibold flex items-center gap-1.5 mt-0.5 truncate">
                         <Building2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                        <span>{quickViewLead.businessName}</span>
+                        <span className="truncate">{quickViewLead.businessName}</span>
                       </p>
                     ) : (
                       <p className="text-[11px] text-slate-400 font-medium mt-0.5">
@@ -2822,7 +2827,7 @@ export default function LeadsManager({
                 </div>
                 <button
                   onClick={() => setQuickViewLead(null)}
-                  className="text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-800 p-2 rounded-xl border border-slate-700/60 transition-colors cursor-pointer"
+                  className="text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-800 p-2 rounded-xl border border-slate-700/60 transition-colors cursor-pointer shrink-0 ml-2"
                   title="Close Drawer"
                 >
                   <X className="w-4 h-4" />
@@ -2830,7 +2835,7 @@ export default function LeadsManager({
               </div>
 
               {/* Drawer Body Scroll Content */}
-              <div className="p-6 overflow-y-auto flex flex-col gap-5 text-xs text-slate-700 flex-1">
+              <div className="p-4 sm:p-6 overflow-y-auto flex flex-col gap-4 sm:gap-5 text-xs text-slate-700 flex-1">
                 {/* Status & Campaign Pill Card */}
                 <div className="flex items-center justify-between bg-slate-50/90 p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs">
                   <div className="flex items-center gap-2">
@@ -2843,7 +2848,7 @@ export default function LeadsManager({
                     <span className="font-bold text-slate-400 uppercase text-[10px] tracking-wider">
                       Campaign:
                     </span>
-                    <span className="bg-white border border-slate-200 px-3 py-1 rounded-xl font-bold text-slate-700 text-[11px] shadow-2xs">
+                    <span className="bg-white border border-slate-200 px-3 py-1 rounded-xl font-bold text-slate-700 text-[11px] shadow-2xs truncate max-w-35 sm:max-w-none">
                       {quickViewLead.campaign || "Direct Outreach"}
                     </span>
                   </div>
@@ -2855,12 +2860,12 @@ export default function LeadsManager({
                     Financial Breakdown
                   </h4>
                   <div className="bg-linear-to-br from-slate-900 to-slate-950 text-white p-4 rounded-2xl border border-slate-800 shadow-xl flex flex-col gap-3.5">
-                    <div className="grid grid-cols-3 gap-2.5 text-center">
-                      <div className="bg-white/5 border border-white/10 p-2.5 rounded-xl">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-2.5 text-center">
+                      <div className="bg-white/5 border border-white/10 p-2 sm:p-2.5 rounded-xl">
                         <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">
                           Total
                         </span>
-                        <span className="text-xs font-mono font-black text-white mt-0.5 block">
+                        <span className="text-xs font-mono font-black text-white mt-0.5 block truncate">
                           ₹
                           {(
                             Number(quickViewLead.totalAmount) ||
@@ -2869,22 +2874,22 @@ export default function LeadsManager({
                           ).toLocaleString("en-IN")}
                         </span>
                       </div>
-                      <div className="bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-xl">
+                      <div className="bg-emerald-500/10 border border-emerald-500/20 p-2 sm:p-2.5 rounded-xl">
                         <span className="text-[9px] uppercase font-bold text-emerald-400 block tracking-wider">
                           Paid
                         </span>
-                        <span className="text-xs font-mono font-black text-emerald-300 mt-0.5 block">
+                        <span className="text-xs font-mono font-black text-emerald-300 mt-0.5 block truncate">
                           ₹
                           {(
                             Number(quickViewLead.paidAmount) || 0
                           ).toLocaleString("en-IN")}
                         </span>
                       </div>
-                      <div className="bg-blue-500/10 border border-blue-500/20 p-2.5 rounded-xl">
+                      <div className="bg-blue-500/10 border border-blue-500/20 p-2 sm:p-2.5 rounded-xl">
                         <span className="text-[9px] uppercase font-bold text-blue-400 block tracking-wider">
                           Balance
                         </span>
-                        <span className="text-xs font-mono font-black text-blue-300 mt-0.5 block">
+                        <span className="text-xs font-mono font-black text-blue-300 mt-0.5 block truncate">
                           ₹
                           {(
                             Number(quickViewLead.balanceAmount) || 0
@@ -3107,11 +3112,11 @@ export default function LeadsManager({
                         </button>
                       </div>
                       {images.length > 0 ? (
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                           {images.map((img, idx) => (
                             <div
                               key={img._id || img.public_id || idx}
-                              className="relative h-28 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 group cursor-pointer shadow-2xs hover:shadow-md transition-all"
+                              className="relative h-24 sm:h-28 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 group cursor-pointer shadow-2xs hover:shadow-md transition-all"
                             >
                               <img
                                 src={img.url}
@@ -3194,21 +3199,24 @@ export default function LeadsManager({
                                 ? "Lead Forwarded"
                                 : h.action === "ACCEPTED"
                                   ? "Lead Accepted"
-                                  : h.action === "UPDATED"
-                                    ? "Profile Updated"
-                                    : h.action === "DOCUMENT_UPLOADED"
-                                      ? "Document Uploaded"
-                                      : h.action === "DOCUMENT_DELETED"
-                                        ? "Document Deleted"
-                                        : h.action === "SOFT_DELETED"
-                                          ? "Moved to Recycle Bin"
-                                          : h.action === "RESTORED"
-                                            ? "Restored from Recycle Bin"
-                                            : "Lead Activity",
-                          performedBy: h.performedBy || "System",
-                          timestamp: h.timestamp || h.createdAt,
-                          details: h.details,
-                          changes: h.changes,
+                                  : h.action === "STATUS_CHANGE"
+                                    ? "Status Updated"
+                                    : "Lead Updated",
+                          description:
+                            h.details ||
+                            (h.action === "CREATED"
+                              ? "Lead added to the directory"
+                              : "Changes made to lead information"),
+                          timestamp: h.timestamp || h.createdAt || new Date(),
+                          performedBy: h.performedBy || "System User",
+                          color:
+                            h.action === "CREATED"
+                              ? "emerald"
+                              : h.action === "FORWARDED"
+                                ? "indigo"
+                                : h.action === "ACCEPTED"
+                                  ? "blue"
+                                  : "slate",
                         });
                       });
                     }
@@ -3231,12 +3239,6 @@ export default function LeadsManager({
                             details: fh.remark
                               ? `Note: ${fh.remark}`
                               : `Lead responsibility assigned to ${fh.forwardedTo}`,
-                            changes: {
-                              handledBy: {
-                                from: "Previous Owner",
-                                to: fh.forwardedTo,
-                              },
-                            },
                           });
                         }
                       });
@@ -3320,7 +3322,7 @@ export default function LeadsManager({
                               <div className="absolute -left-5.25 top-1.5 w-3 h-3 rounded-full bg-white border-2 border-indigo-500 group-hover:scale-125 transition-transform" />
 
                               <div className="bg-slate-50/90 hover:bg-slate-50 border border-slate-200/80 rounded-2xl p-3 text-xs transition-all shadow-2xs">
-                                <div className="flex items-center justify-between gap-2 mb-1">
+                                <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
                                   <span
                                     className={`px-2 py-0.5 text-[10px] font-extrabold rounded-md border inline-flex items-center gap-1 ${badgeBg}`}
                                   >
@@ -3359,10 +3361,10 @@ export default function LeadsManager({
               </div>
 
               {/* Bottom Actions Footer */}
-              <div className="bg-white/95 backdrop-blur-md border-t border-slate-200/80 p-4 flex items-center justify-between gap-3 shrink-0 shadow-lg">
+              <div className="bg-white/95 backdrop-blur-md border-t border-slate-200/80 p-3.5 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 shrink-0 shadow-lg">
                 <button
                   onClick={() => handleOpenScheduleFollowUp(quickViewLead)}
-                  className="px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-xs rounded-xl border border-blue-200/80 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                  className="px-3.5 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-xs rounded-xl border border-blue-200/80 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs flex-1 sm:flex-initial"
                 >
                   <Calendar className="w-4 h-4 text-blue-600" />
                   <span>Schedule Follow-Up</span>
@@ -3378,31 +3380,31 @@ export default function LeadsManager({
                         status: "Active",
                       }));
                     }}
-                    className="px-5 py-2.5 bg-linear-to-r from-blue-500 to-orange-500 hover:from-blue-600 hover:to-orange-600 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-orange-500/25 transition-all cursor-pointer flex items-center gap-1.5"
+                    className="px-4 py-2.5 bg-linear-to-r from-blue-500 to-orange-500 hover:from-blue-600 hover:to-orange-600 active:scale-95 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-orange-500/25 transition-all cursor-pointer flex items-center justify-center gap-1.5 flex-1 sm:flex-initial"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Accept Lead Now</span>
                   </button>
                 ) : (
-                  <div className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-200/80 flex items-center gap-1.5">
+                  <div className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-200/80 flex items-center justify-center gap-1.5 flex-1 sm:flex-initial">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     <span>Assigned to {quickViewLead.handledBy}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
                   <button
                     onClick={() => handleOpenForwardModal(quickViewLead)}
-                    className="px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 transition-colors cursor-pointer flex items-center gap-1.5"
+                    className="flex-1 sm:flex-initial justify-center px-3.5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 transition-colors cursor-pointer flex items-center gap-1.5"
                   >
                     <Send className="w-4 h-4 text-indigo-600" />
-                    <span>Forward Lead</span>
+                    <span>Forward</span>
                   </button>
                   <button
                     onClick={() => handleOpenEditLead(quickViewLead)}
-                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-colors cursor-pointer flex items-center gap-1.5"
+                    className="flex-1 sm:flex-initial justify-center px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-colors cursor-pointer flex items-center gap-1.5"
                   >
                     <Edit3 className="w-4 h-4 text-slate-500" />
-                    <span>Edit Lead</span>
+                    <span>Edit</span>
                   </button>
                 </div>
               </div>
@@ -3415,7 +3417,7 @@ export default function LeadsManager({
       {leadModal.isOpen &&
         isClient &&
         createPortal(
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-9999 flex items-center justify-center p-4 animate-fade-in">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-9999 flex items-center justify-center p-2 sm:p-4 animate-fade-in">
             <form
               onSubmit={handleLeadFormSubmit}
               onKeyDown={(e) => {
@@ -3423,20 +3425,20 @@ export default function LeadsManager({
                   e.preventDefault();
                 }
               }}
-              className="bg-white rounded-xl shadow-2xl border border-slate-200/80 w-full max-w-3xl overflow-hidden animate-slide-up flex flex-col max-h-[85vh]"
+              className="bg-white rounded-2xl shadow-2xl border border-slate-200/80 w-full max-w-3xl overflow-hidden animate-slide-up flex flex-col max-h-[94vh] sm:max-h-[85vh]"
             >
               {/* Modal Header */}
-              <div className="bg-slate-50 border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+              <div className="bg-slate-50 border-b border-slate-100 px-4 sm:px-6 py-3.5 sm:py-4 flex justify-between items-center">
                 <div>
                   <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2 flex-wrap">
-                    <User className="w-4 h-4 text-sky-500" />
+                    <User className="w-4 h-4 text-sky-500 shrink-0" />
                     <span>
                       {leadModal.type === "add"
                         ? "Create Lead Profile"
                         : "Edit Lead Profile"}
                     </span>
-                    <span className="text-slate-300 font-normal">•</span>
-                    <span className="text-sky-700 font-extrabold text-xs bg-sky-100/80 px-2.5 py-0.5 rounded-lg border border-sky-200 inline-flex items-center gap-1.5 shadow-2xs">
+                    <span className="text-slate-300 font-normal hidden sm:inline">•</span>
+                    <span className="text-sky-700 font-extrabold text-[11px] sm:text-xs bg-sky-100/80 px-2 sm:px-2.5 py-0.5 rounded-lg border border-sky-200 inline-flex items-center gap-1 shadow-2xs">
                       {[
                         { id: "general", label: "General Info" },
                         { id: "contact", label: "Contact & Social" },
@@ -3466,7 +3468,7 @@ export default function LeadsManager({
               </div>
 
               {/* Interactive Step Wizard Navigation Tabs */}
-              <div className="bg-slate-100/80 border-b border-slate-200 px-4 py-2 flex items-center justify-between gap-1 overflow-x-auto">
+              <div className="bg-slate-100/80 border-b border-slate-200 px-3 sm:px-4 py-2 flex items-center gap-1 sm:gap-1.5 overflow-x-auto">
                 {[
                   { id: "general", label: "General" },
                   { id: "contact", label: "Contact" },
@@ -3506,7 +3508,7 @@ export default function LeadsManager({
                         }
                         setActiveFormTab(stepTab.id);
                       }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                      className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                         isActive
                           ? "bg-sky-600 text-white shadow-xs"
                           : isPast
@@ -3540,7 +3542,7 @@ export default function LeadsManager({
               </div>
 
               {/* Scrollable Form Content */}
-              <div className="overflow-y-auto p-6 flex-1 max-h-[60vh]">
+              <div className="overflow-y-auto p-4 sm:p-6 flex-1 max-h-[calc(94vh-180px)] sm:max-h-[60vh]">
                 {/* Tab 1: General Info */}
                 {activeFormTab === "general" && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
@@ -4116,7 +4118,7 @@ export default function LeadsManager({
                             No Images or Files Selected
                           </span>
                           <p className="text-[11px] text-slate-400 font-medium px-6 max-w-sm">
-                            Click "Upload / Select Images" above to select
+                            Click &quot;Upload / Select Images&quot; above to select
                             photos or documents to attach while creating this
                             lead.
                           </p>
@@ -4314,8 +4316,8 @@ export default function LeadsManager({
                         </span>
                         <p className="text-[11px] text-slate-400 font-medium px-6 max-w-sm">
                           Extend your lead forms with fields like GSTIN,
-                          Industry, or Alternate Email by clicking "Add Custom
-                          Field".
+                          Industry, or Alternate Email by clicking &quot;Add Custom
+                          Field&quot;.
                         </p>
                       </div>
                     )}
@@ -4324,18 +4326,18 @@ export default function LeadsManager({
               </div>
 
               {/* Modal Actions Footer */}
-              <div className="bg-slate-50 border-t border-slate-100 px-6 py-4 flex items-center justify-between gap-3 shrink-0">
+              <div className="bg-slate-50 border-t border-slate-100 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2 sm:gap-3 shrink-0">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() =>
                       setLeadModal({ isOpen: false, type: "add", leadId: null })
                     }
-                    className="px-4 py-2 border border-slate-200 hover:bg-slate-100 text-slate-600 font-bold text-xs uppercase rounded-xl transition-colors cursor-pointer"
+                    className="px-3 sm:px-4 py-2 border border-slate-200 hover:bg-slate-100 text-slate-600 font-bold text-xs uppercase rounded-xl transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
-                  <span className="text-[11px] font-bold text-slate-400 ml-2 hidden sm:inline-block">
+                  <span className="text-[11px] font-bold text-slate-400 ml-1 sm:ml-2 hidden sm:inline-block">
                     Step {currentStepIndex + 1} of {FORM_STEPS.length}
                   </span>
                 </div>
@@ -4345,7 +4347,7 @@ export default function LeadsManager({
                     <button
                       type="button"
                       onClick={handlePrevStep}
-                      className="px-4 py-2.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs uppercase rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+                      className="px-3 sm:px-4 py-2 sm:py-2.5 border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs uppercase rounded-xl transition-all cursor-pointer flex items-center gap-1 sm:gap-1.5"
                     >
                       <ChevronLeft className="w-4 h-4" />
                       <span>Back</span>
@@ -4356,7 +4358,7 @@ export default function LeadsManager({
                     <button
                       type="button"
                       onClick={handleNextStep}
-                      className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs uppercase rounded-xl shadow-md shadow-sky-600/20 transition-all cursor-pointer flex items-center gap-1.5"
+                      className="px-3.5 sm:px-5 py-2 sm:py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs uppercase rounded-xl shadow-md shadow-sky-600/20 transition-all cursor-pointer flex items-center gap-1 sm:gap-1.5"
                     >
                       <span>Next</span>
                       <ChevronRight className="w-4 h-4" />
@@ -4368,7 +4370,7 @@ export default function LeadsManager({
                         isSubmitButtonClickedRef.current = true;
                       }}
                       disabled={isSubmitting || uploadingDoc}
-                      className={`px-5 py-2.5 text-white font-bold text-xs uppercase rounded-xl shadow-md transition-all flex items-center gap-1.5 ${
+                      className={`px-3.5 sm:px-5 py-2 sm:py-2.5 text-white font-bold text-xs uppercase rounded-xl shadow-md transition-all flex items-center gap-1.5 ${
                         isSubmitting || uploadingDoc
                           ? "bg-slate-400 cursor-not-allowed shadow-none"
                           : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20 cursor-pointer"
@@ -4380,7 +4382,7 @@ export default function LeadsManager({
                           <span>
                             {pendingFiles.length > 0
                               ? "Saving & Uploading..."
-                              : "Saving Lead..."}
+                              : "Saving..."}
                           </span>
                         </>
                       ) : (
@@ -4388,7 +4390,7 @@ export default function LeadsManager({
                           <CheckCircle2 className="w-4 h-4" />
                           <span>
                             {leadModal.type === "add"
-                              ? "Create Lead Profile"
+                              ? "Create Lead"
                               : "Save Changes"}
                           </span>
                         </>
@@ -4609,32 +4611,34 @@ export default function LeadsManager({
 
       {/* Floating Bulk Actions Bar */}
       {selectedLeadIds.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/90 backdrop-blur-md text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center gap-4 animate-in slide-in-from-bottom-5 duration-200">
+        <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] sm:w-auto max-w-lg bg-slate-900/95 backdrop-blur-md text-white px-4 sm:px-5 py-3 rounded-2xl shadow-2xl border border-slate-700/80 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 sm:gap-4 animate-in slide-in-from-bottom-5 duration-200">
           <div className="text-xs font-extrabold flex items-center gap-2">
-            <span className="w-6 h-6 bg-indigo-500 text-white rounded-full flex items-center justify-center text-[11px]">
+            <span className="w-6 h-6 bg-indigo-500 text-white rounded-full flex items-center justify-center text-[11px] shrink-0">
               {selectedLeadIds.length}
             </span>
-            <span>lead(s) selected</span>
+            <span className="truncate">lead(s) selected</span>
           </div>
-          <div className="h-4 w-px bg-slate-700" />
-          <button
-            onClick={() => {
-              const selectedLeads = leads.filter((l) =>
-                selectedLeadIds.includes(l.id || l._id),
-              );
-              handleOpenForwardModal(selectedLeads);
-            }}
-            className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
-          >
-            <Send className="w-3.5 h-3.5" />
-            <span>Forward Selected Leads</span>
-          </button>
-          <button
-            onClick={() => setSelectedLeadIds([])}
-            className="px-3 py-1.5 text-slate-400 hover:text-white font-bold text-xs transition-colors cursor-pointer"
-          >
-            Deselect All
-          </button>
+          <div className="hidden sm:block h-4 w-px bg-slate-700" />
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button
+              onClick={() => {
+                const selectedLeads = leads.filter((l) =>
+                  selectedLeadIds.includes(l.id || l._id),
+                );
+                handleOpenForwardModal(selectedLeads);
+              }}
+              className="flex-1 sm:flex-initial justify-center px-3.5 sm:px-4 py-2 sm:py-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>Forward Selected</span>
+            </button>
+            <button
+              onClick={() => setSelectedLeadIds([])}
+              className="px-2.5 sm:px-3 py-1.5 text-slate-400 hover:text-white font-bold text-xs transition-colors cursor-pointer shrink-0"
+            >
+              Deselect
+            </button>
+          </div>
         </div>
       )}
 
@@ -4642,54 +4646,54 @@ export default function LeadsManager({
       {forwardModal.isOpen &&
         isClient &&
         createPortal(
-          <div className="fixed inset-0 z-99999 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="fixed inset-0 z-99999 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
             <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-md overflow-hidden flex flex-col">
               {/* Modal Header */}
-              <div className="p-6 bg-linear-to-r from-indigo-600 to-purple-600 text-white flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-white/20 backdrop-blur-md rounded-2xl">
-                    <Send className="w-5 h-5 text-white" />
+              <div className="p-4 sm:p-6 bg-linear-to-r from-indigo-600 to-purple-600 text-white flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2 sm:p-2.5 bg-white/20 backdrop-blur-md rounded-2xl shrink-0">
+                    <Send className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-white" />
                   </div>
-                  <div>
-                    <h3 className="font-extrabold text-base leading-snug">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-extrabold text-sm sm:text-base leading-snug truncate">
                       {forwardModal.leadsToForward.length > 1
                         ? `Forward ${forwardModal.leadsToForward.length} Leads`
                         : "Forward Lead"}
                     </h3>
-                    <p className="text-xs text-indigo-100 font-medium">
+                    <p className="text-xs text-indigo-100 font-medium truncate">
                       Assign lead responsibility to another employee
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={handleCloseForwardModal}
-                  className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+                  className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer shrink-0 ml-2"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Modal Body */}
-              <div className="p-6 space-y-4 text-xs font-semibold text-slate-700">
+              <div className="p-4 sm:p-6 space-y-4 text-xs font-semibold text-slate-700">
                 {/* Selected Lead Summary */}
                 {forwardModal.leadsToForward.length === 1 && (
-                  <div className="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-3.5 flex items-center justify-between">
-                    <div>
-                      <div className="font-bold text-indigo-950 text-sm">
+                  <div className="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-3.5 flex items-center justify-between flex-wrap gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-indigo-950 text-sm truncate">
                         {forwardModal.leadsToForward[0].name}
                       </div>
-                      <div className="text-[11px] text-indigo-700 font-medium">
+                      <div className="text-[11px] text-indigo-700 font-medium truncate">
                         {forwardModal.leadsToForward[0].businessName ||
                           "Individual Client"}{" "}
                         • {forwardModal.leadsToForward[0].phone}
                       </div>
                     </div>
                     {forwardModal.leadsToForward[0].handledBy ? (
-                      <span className="px-2.5 py-1 bg-white text-indigo-700 border border-indigo-200 text-[10px] font-bold rounded-lg">
+                      <span className="px-2.5 py-1 bg-white text-indigo-700 border border-indigo-200 text-[10px] font-bold rounded-lg shrink-0">
                         Currently: {forwardModal.leadsToForward[0].handledBy}
                       </span>
                     ) : (
-                      <span className="px-2.5 py-1 bg-amber-100 text-amber-800 text-[10px] font-bold rounded-lg">
+                      <span className="px-2.5 py-1 bg-amber-100 text-amber-800 text-[10px] font-bold rounded-lg shrink-0">
                         Unassigned
                       </span>
                     )}
@@ -4779,7 +4783,7 @@ export default function LeadsManager({
               </div>
 
               {/* Modal Footer */}
-              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+              <div className="p-3.5 sm:p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={handleCloseForwardModal}
@@ -4816,19 +4820,19 @@ export default function LeadsManager({
       {/* Schedule Follow-Up Modal */}
       {scheduleFollowUpModal.isOpen &&
         createPortal(
-          <div className="fixed inset-0 z-99999 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="fixed inset-0 z-99999 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
             <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-md overflow-hidden flex flex-col">
               {/* Modal Header */}
-              <div className="p-6 bg-linear-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-white/20 backdrop-blur-md rounded-2xl">
-                    <Calendar className="w-5 h-5 text-white" />
+              <div className="p-4 sm:p-6 bg-linear-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2 sm:p-2.5 bg-white/20 backdrop-blur-md rounded-2xl shrink-0">
+                    <Calendar className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-white" />
                   </div>
-                  <div>
-                    <h3 className="font-extrabold text-base leading-snug">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-extrabold text-sm sm:text-base leading-snug truncate">
                       Schedule Follow-Up
                     </h3>
-                    <p className="text-xs text-blue-100 font-medium">
+                    <p className="text-xs text-blue-100 font-medium truncate">
                       Add a follow-up task for{" "}
                       {scheduleFollowUpModal.lead?.name || "Client"}
                     </p>
@@ -4836,26 +4840,26 @@ export default function LeadsManager({
                 </div>
                 <button
                   onClick={handleCloseScheduleFollowUp}
-                  className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+                  className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer shrink-0 ml-2"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Modal Body */}
-              <div className="p-6 space-y-4 text-xs font-semibold text-slate-700">
+              <div className="p-4 sm:p-6 space-y-4 text-xs font-semibold text-slate-700">
                 {/* Client Info Banner */}
-                <div className="bg-blue-50/60 border border-blue-100 rounded-2xl p-3.5 flex items-center justify-between">
-                  <div>
-                    <div className="font-bold text-slate-900 text-sm">
+                <div className="bg-blue-50/60 border border-blue-100 rounded-2xl p-3.5 flex items-center justify-between flex-wrap gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-slate-900 text-sm truncate">
                       {scheduleFollowUpModal.lead?.name}
                     </div>
-                    <div className="text-[11px] text-blue-700 font-medium font-mono">
+                    <div className="text-[11px] text-blue-700 font-medium font-mono truncate">
                       {scheduleFollowUpModal.lead?.phone} •{" "}
                       {scheduleFollowUpModal.lead?.businessName || "Client"}
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-lg">
+                  <span className="px-2.5 py-1 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-lg shrink-0">
                     {scheduleFollowUpModal.lead?.status || "Active"}
                   </span>
                 </div>
@@ -4902,7 +4906,7 @@ export default function LeadsManager({
               </div>
 
               {/* Modal Footer */}
-              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+              <div className="p-3.5 sm:p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={handleCloseScheduleFollowUp}
@@ -4940,16 +4944,16 @@ export default function LeadsManager({
       {/* Floating Toast Notification */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-99999 px-4 py-3 rounded-2xl shadow-2xl border text-xs font-bold flex items-center gap-2.5 animate-bounce-in ${
+          className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-99999 px-4 py-3 rounded-2xl shadow-2xl border text-xs font-bold flex items-center gap-2.5 animate-bounce-in max-w-sm sm:max-w-md ${
             toast.type === "error"
               ? "bg-rose-900 text-white border-rose-700"
               : "bg-slate-900 text-white border-slate-700"
           }`}
         >
           {toast.type === "error" ? (
-            <AlertCircle className="w-4 h-4 text-rose-400" />
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
           ) : (
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           )}
           <span>{toast.message}</span>
         </div>

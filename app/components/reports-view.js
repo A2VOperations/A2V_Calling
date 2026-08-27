@@ -42,9 +42,7 @@ export default function ReportsView({ user: currentUser }) {
   const [error, setError] = useState("");
 
   // Filters & State
-  const [selectedUser, setSelectedUser] = useState(() =>
-    isAdmin ? "all" : loggedInUser?.name || loggedInUser?.email || "all",
-  );
+  const [selectedUser, setSelectedUser] = useState("all");
 
   // Default to current year-month (e.g. 2026-08)
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -78,12 +76,12 @@ export default function ReportsView({ user: currentUser }) {
         })
           .then((res) => res.json())
           .catch(() => ({ success: false })),
-        fetch(`${API_BASE_URL}/api/leads`, {
+        fetch(`${API_BASE_URL}/api/leads/reports`, {
           headers: { "x-user-id": userId },
         })
           .then((res) => res.json())
           .catch(() => ({ success: false })),
-        fetch(`${API_BASE_URL}/api/followups`)
+        fetch(`${API_BASE_URL}/api/followups/reports`)
           .then((res) => res.json())
           .catch(() => ({ success: false })),
         fetch(`${API_BASE_URL}/api/design-projects`, {
@@ -643,31 +641,22 @@ export default function ReportsView({ user: currentUser }) {
             </button>
           </div>
 
-          {/* User Selector Dropdown (Admin Only) */}
-          {isAdmin ? (
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700">
-              <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <select
-                value={selectedUser}
-                onChange={(e) => setSelectedUser(e.target.value)}
-                className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer pr-1"
-              >
-                <option value="all">All Team Members</option>
-                {allUserOptions.map((u) => (
-                  <option key={u._id || u.email} value={u.name || u.email}>
-                    {u.name} ({u.role || "employee"})
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 bg-sky-50 border border-sky-200/80 px-3 py-2 rounded-xl text-xs font-bold text-sky-700">
-              <User className="w-3.5 h-3.5 text-sky-500 shrink-0" />
-              <span>
-                {loggedInUser?.name || loggedInUser?.email || "My Performance"}
-              </span>
-            </div>
-          )}
+          {/* User Selector Dropdown */}
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700">
+            <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <select
+              value={selectedUser}
+              onChange={(e) => setSelectedUser(e.target.value)}
+              className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer pr-1"
+            >
+              <option value="all">All Team Members</option>
+              {allUserOptions.map((u) => (
+                <option key={u._id || u.email} value={u.name || u.email}>
+                  {u.name} ({u.role || "employee"})
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Month Selector */}
           <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700">
@@ -1061,24 +1050,19 @@ export default function ReportsView({ user: currentUser }) {
               <span>Activities in a Day Report ({selectedMonth})</span>
             </button>
 
-            {isAdmin && (
-              <button
-                onClick={() => setActiveTab("userLeaderboard")}
-                className={`pb-3 text-xs font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
-                  activeTab === "userLeaderboard"
-                    ? "text-sky-600 border-b-2 border-sky-600"
-                    : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                <Users className="w-4 h-4" />
-                <span>
-                  User Activeness Leaderboard ({userActivenessList.length})
-                </span>
-                <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded">
-                  Admin Only
-                </span>
-              </button>
-            )}
+            <button
+              onClick={() => setActiveTab("userLeaderboard")}
+              className={`pb-3 text-xs font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
+                activeTab === "userLeaderboard"
+                  ? "text-sky-600 border-b-2 border-sky-600"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>
+                User Activeness Leaderboard ({userActivenessList.length})
+              </span>
+            </button>
           </div>
 
           {/* TAB 0: LEAD HANDLING & ASSIGNMENT REPORT */}
@@ -1122,7 +1106,9 @@ export default function ReportsView({ user: currentUser }) {
                         <th className="py-3.5 px-4">Active Handled Leads</th>
                         <th className="py-3.5 px-4">Handled Paid Revenue</th>
                         <th className="py-3.5 px-4">Handling Share %</th>
-                        <th className="py-3.5 px-5 text-right">Actions</th>
+                        {isAdmin && (
+                          <th className="py-3.5 px-5 text-right">Actions</th>
+                        )}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
@@ -1187,26 +1173,28 @@ export default function ReportsView({ user: currentUser }) {
                                 </span>
                               </div>
                             </td>
-                            <td className="py-4 px-5 text-right">
-                              <button
-                                onClick={() =>
-                                  setSelectedUserHandledDetail(item)
-                                }
-                                className="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 border border-emerald-200/60 shadow-2xs"
-                              >
-                                <Eye className="w-3.5 h-3.5" />
-                                <span>
-                                  View Handled Leads (
-                                  {item.handledLeadsList.length})
-                                </span>
-                              </button>
-                            </td>
+                            {isAdmin && (
+                              <td className="py-4 px-5 text-right">
+                                <button
+                                  onClick={() =>
+                                    setSelectedUserHandledDetail(item)
+                                  }
+                                  className="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 border border-emerald-200/60 shadow-2xs"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                  <span>
+                                    View Handled Leads (
+                                    {item.handledLeadsList.length})
+                                  </span>
+                                </button>
+                              </td>
+                            )}
                           </tr>
                         ))
                       ) : (
                         <tr>
                           <td
-                            colSpan={7}
+                            colSpan={isAdmin ? 7 : 6}
                             className="py-8 text-center text-slate-400 font-medium"
                           >
                             No lead handling records found for team members.
@@ -1779,7 +1767,8 @@ export default function ReportsView({ user: currentUser }) {
           document.body,
         )}
       {/* FULL-SCREEN USER HANDLED LEADS DETAIL MODAL */}
-      {selectedUserHandledDetail &&
+      {isAdmin &&
+        selectedUserHandledDetail &&
         isClient &&
         createPortal(
           <div className="fixed inset-0 z-99999 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 md:p-6 animate-fade-in font-sans">
